@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file:*)",
+      "Bash(textutil:*)",
+      "Bash(open:*)",
+      "Bash(pip3 list:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(rm:*)"
+    ]
+  }
+}

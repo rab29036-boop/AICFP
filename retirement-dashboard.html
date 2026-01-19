@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Plan with Roth Conversion Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(31, 41, 55, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #06b6d4;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --positive: #10b981;
+            --positive-bg: rgba(16, 185, 129, 0.1);
+            --negative: #ef4444;
+            --negative-bg: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            --gradient-3: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding: 20px 20px 12px;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: var(--gradient-1);
+            border-radius: 2px;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 400;
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+        }
+
+        .nav-link:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .nav-link.active {
+            background: var(--gradient-2);
+            border-color: transparent;
+            color: white;
+        }
+
+        .nav-link svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-1);
+        }
+
+        .card-title .icon svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+
+        h2 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: var(--gradient-1);
+            border-radius: 2px;
+        }
+
+        h3 {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin: 12px 0 8px 0;
+        }
+
+        /* Controls Panel */
+        .controls {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .control-group input, .control-group select {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .control-group input:hover, .control-group select:hover {
+            border-color: var(--accent-primary);
+        }
+
+        /* Account rows - 2 row grid layout */
+        .account-rows-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .account-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .account-row:hover {
+            border-color: var(--border-color);
+        }
+
+        .account-row .control-group {
+            margin-bottom: 0;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .account-row .control-group label {
+            margin-bottom: 0;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        .account-row .control-group input {
+            padding: 6px 8px;
+            font-size: 0.85rem;
+            width: 115px;
+        }
+
+        .account-row .control-group.roi-group {
+            gap: 4px;
+        }
+
+        .account-row .control-group.roi-group label {
+            font-size: 0.75rem;
+        }
+
+        .account-row .control-group.roi-group input {
+            width: 70px;
+        }
+
+        /* Collapsible sections */
+        .collapsible-section {
+            margin-bottom: 8px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            user-select: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .section-header:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-color);
+        }
+
+        .section-header h3 {
+            margin: 0;
+            flex-grow: 1;
+            font-size: 0.8rem;
+        }
+
+        .caret {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            background: var(--accent-primary);
+            border-radius: 5px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .caret::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid white;
+        }
+
+        .caret.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, padding 0.3s;
+            max-height: 1000px;
+            opacity: 1;
+            padding-top: 10px;
+        }
+
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+        }
+
+        /* Baseline controls */
+        .baseline-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .baseline-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--accent-primary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .baseline-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .baseline-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .baseline-btn.clear {
+            border-color: var(--negative);
+            color: var(--negative);
+        }
+
+        .baseline-btn.clear:hover {
+            background: var(--negative);
+            color: white;
+        }
+
+        .baseline-status {
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-left: auto;
+            gap: 6px;
+        }
+
+        .baseline-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .baseline-status.active {
+            color: var(--positive);
+        }
+
+        .baseline-status.active .baseline-indicator {
+            background: var(--positive);
+            box-shadow: 0 0 12px var(--positive);
+        }
+
+        /* Scenario selector */
+        .scenario-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .scenario-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .scenario-presets {
+            display: flex;
+            gap: 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .scenario-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .scenario-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .scenario-btn.active {
+            background: var(--gradient-2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .scenario-btn.aggressive.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+        }
+
+        /* Year range selector */
+        .year-range-selector {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .range-presets {
+            display: flex;
+            gap: 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .range-btn {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .range-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .range-btn.active {
+            background: var(--gradient-2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .range-custom {
+            display: none;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .range-custom.visible {
+            display: flex;
+        }
+
+        .range-select-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .range-select-group label {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .range-select-group select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .range-select-group select:hover, .range-select-group select:focus {
+            border-color: var(--accent-primary);
+            outline: none;
+        }
+
+        .range-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            margin-left: auto;
+            padding: 6px 10px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .range-info svg {
+            width: 12px;
+            height: 12px;
+            color: var(--accent-tertiary);
+        }
+
+        /* Summary Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-card.permanent {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .metric-card.permanent::before {
+            opacity: 1;
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .metric-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-icon.blue { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)); }
+        .metric-icon.green { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2)); }
+        .metric-icon.purple { background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2)); }
+        .metric-icon.cyan { background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2)); }
+        .metric-icon.orange { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2)); }
+
+        .metric-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .metric-icon.blue svg { color: var(--accent-primary); }
+        .metric-icon.green svg { color: var(--positive); }
+        .metric-icon.purple svg { color: var(--accent-secondary); }
+        .metric-icon.cyan svg { color: var(--accent-tertiary); }
+        .metric-icon.orange svg { color: var(--warning); }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+
+        .metric-comparison {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .metric-comparison.positive {
+            background: var(--positive-bg);
+            color: var(--positive);
+        }
+
+        .metric-comparison.negative {
+            background: var(--negative-bg);
+            color: var(--negative);
+        }
+
+        .metric-comparison.neutral {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+        }
+
+        .metric-comparison svg {
+            width: 10px;
+            height: 10px;
+        }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Chart container */
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-top: 16px;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th:first-child, td:first-child {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: var(--bg-secondary);
+            z-index: 5;
+            font-weight: 500;
+        }
+
+        td:first-child {
+            background: var(--bg-card);
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        tbody tr:hover td:first-child {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        td {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .positive { color: var(--positive) !important; }
+        .negative { color: var(--negative) !important; }
+
+        .highlight {
+            background: rgba(99, 102, 241, 0.08) !important;
+        }
+
+        .highlight td {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .subtotal {
+            background: rgba(99, 102, 241, 0.04) !important;
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .subtotal td {
+            font-weight: 500;
+        }
+
+        .comparison-row {
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .comparison-row td {
+            font-size: 0.8rem;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        /* Info box */
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 0 12px 12px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-box svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: var(--accent-primary);
+            margin-top: 2px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card, .metric-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .baseline-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .baseline-status {
+                margin-left: 0;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <h1>Retirement Planning Dashboard</h1>
+            <p class="subtitle">Roth Conversion Strategy & Financial Projections</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-container">
+            <a href="retirement-dashboard.html" class="nav-link active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Retirement Projections
+            </a>
+            <a href="holdings-tracker.html" class="nav-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                Holdings Tracker
+            </a>
+        </nav>
+
+        <!-- Input Controls -->
+        <div class="controls">
+            <h2>Model Parameters</h2>
+
+            <!-- General Settings Section -->
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="caret collapsed"></span>
+                    <h3>General Settings</h3>
+                </div>
+                <div class="section-content collapsed">
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label>Inflation Rate (%)</label>
+                            <input type="number" id="inflationRate" value="3" step="0.5" min="0" max="10">
+                        </div>
+                        <div class="control-group">
+                            <label>Annual After-Tax Income Target ($)</label>
+                            <input type="number" id="incomeTarget" value="325000" step="5000" min="0">
+                        </div>
+                        <div class="control-group">
+                            <label>Itemized Deductions ($)</label>
+                            <input type="number" id="itemizedDeductions" value="78000" step="1000" min="0">
+                        </div>
+                        <div class="control-group">
+                            <label>State Tax Rate (%)</label>
+                            <input type="number" id="stateTaxRate" value="6" step="0.5" min="0" max="15">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed Income Sources Section -->
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="caret collapsed"></span>
+                    <h3>Fixed Income Sources (Annual)</h3>
+                </div>
+                <div class="section-content collapsed">
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label>Bob's Pension ($)</label>
+                            <input type="number" id="bobsPension" value="134686" step="1000">
+                        </div>
+                        <div class="control-group">
+                            <label>Susan's Pension ($)</label>
+                            <input type="number" id="susansPension" value="22000" step="1000">
+                        </div>
+                        <div class="control-group">
+                            <label>Susan's Social Security ($)</label>
+                            <input type="number" id="susansSS" value="21600" step="100">
+                        </div>
+                        <div class="control-group">
+                            <label>Bob's Social Security (at 70) ($)</label>
+                            <input type="number" id="bobsSS" value="61032" step="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Balances & ROI Section -->
+            <div class="collapsible-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="caret collapsed"></span>
+                    <h3>Account Balances & Returns (End of 2026)</h3>
+                </div>
+                <div class="section-content collapsed">
+                    <div class="account-rows-grid">
+                        <div class="account-row">
+                            <div class="control-group"><label>Bob's IRA</label><input type="number" id="bobsIRA" value="1025000" step="10000"></div>
+                            <div class="control-group roi-group"><label>ROI%</label><input type="number" id="bobsIRAROI" value="6" step="0.5" min="-20" max="20"></div>
+                        </div>
+                        <div class="account-row">
+                            <div class="control-group"><label>Bob's Roth</label><input type="number" id="bobsRoth" value="300000" step="10000"></div>
+                            <div class="control-group roi-group"><label>ROI%</label><input type="number" id="bobsRothROI" value="6" step="0.5" min="-20" max="20"></div>
+                        </div>
+                        <div class="account-row">
+                            <div class="control-group"><label>Susan's IRA</label><input type="number" id="susansIRA" value="800000" step="10000"></div>
+                            <div class="control-group roi-group"><label>ROI%</label><input type="number" id="susansIRAROI" value="6" step="0.5" min="-20" max="20"></div>
+                        </div>
+                        <div class="account-row">
+                            <div class="control-group"><label>eTrade IRA</label><input type="number" id="etradeIRA" value="1583637" step="10000"></div>
+                            <div class="control-group roi-group"><label>ROI%</label><input type="number" id="etradeIRAROI" value="6" step="0.5" min="-20" max="20"></div>
+                        </div>
+                        <div class="account-row">
+                            <div class="control-group"><label>WF</label><input type="number" id="wellsFargo" value="2000000" step="10000"></div>
+                            <div class="control-group roi-group"><label>Int%</label><input type="number" id="interestRate" value="4" step="0.5" min="0" max="15"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Baseline Controls -->
+            <div class="baseline-controls">
+                <button class="baseline-btn" id="saveBaselineBtn" onclick="saveBaseline()">
+                    <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save as Baseline
+                </button>
+                <button class="baseline-btn clear" id="clearBaselineBtn" onclick="clearBaseline()" style="display: none;">
+                    <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    Clear Baseline
+                </button>
+                <div class="baseline-status" id="baselineStatus">
+                    <span class="baseline-indicator"></span>
+                    <span id="baselineStatusText">No baseline set</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenario Selector -->
+        <div class="scenario-selector">
+            <span class="scenario-label">Scenario:</span>
+            <div class="scenario-presets">
+                <button class="scenario-btn active" id="conservativeBtn" onclick="applyScenario('conservative')">Conservative</button>
+                <button class="scenario-btn aggressive" id="aggressiveBtn" onclick="applyScenario('aggressive')">Aggressive</button>
+            </div>
+        </div>
+
+        <!-- Year Range Selector -->
+        <div class="year-range-selector">
+            <div class="range-presets">
+                <button class="range-btn active" id="range10Btn" onclick="setPresetRange(2026, 2035)">10 Yr</button>
+                <button class="range-btn" id="range15Btn" onclick="setPresetRange(2026, 2040)">15 Yr</button>
+                <button class="range-btn" id="range20Btn" onclick="setPresetRange(2026, 2045)">20 Yr</button>
+                <button class="range-btn" id="range25Btn" onclick="setPresetRange(2026, 2050)">25 Yr</button>
+                <button class="range-btn" id="range27Btn" onclick="setPresetRange(2026, 2052)">27 Yr</button>
+                <button class="range-btn" id="rangeCustomBtn" onclick="enableCustomRange()">Custom</button>
+            </div>
+            <div class="range-custom" id="customRangeControls">
+                <div class="range-select-group">
+                    <label>From:</label>
+                    <select id="startYearSelect" onchange="updateCustomRange()"></select>
+                </div>
+                <div class="range-select-group">
+                    <label>To:</label>
+                    <select id="endYearSelect" onchange="updateCustomRange()"></select>
+                </div>
+            </div>
+            <div class="range-info" id="rangeInfo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Bob age 64-73, Susan age 74-83
+            </div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="metrics-grid" id="summaryMetrics">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid-2">
+            <div class="card">
+                <h2>After-Tax Income (By Source)</h2>
+                <div class="chart-container">
+                    <canvas id="afterTaxDetailChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Net Worth Over Time</h2>
+                <div class="chart-container">
+                    <canvas id="netWorthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2>Account Balances Over Time</h2>
+                <div class="chart-container">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>After-Tax Income (Summary)</h2>
+                <div class="chart-container">
+                    <canvas id="afterTaxChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2>Income Sources by Year (Pre-Tax)</h2>
+                <div class="chart-container">
+                    <canvas id="incomeChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Roth Conversion Strategy</h2>
+                <div class="chart-container">
+                    <canvas id="rothChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Tax Analysis</h2>
+            <div class="chart-container">
+                <canvas id="taxChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Income Sources Table -->
+        <div class="card">
+            <h2>Income Sources</h2>
+            <div class="info-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>This table shows annual income from all sources. Roth conversions are calculated to fill the 24% tax bracket (up to $403,550 taxable income).</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="incomeTable"></table>
+            </div>
+        </div>
+
+        <!-- After-Tax Income Table -->
+        <div class="card">
+            <h2>After-Tax Income by Year</h2>
+            <div class="info-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Income sources after federal and state taxes are deducted. Tax-free sources (Roth, Wells Fargo) pass through at 100%.</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="afterTaxTable"></table>
+            </div>
+        </div>
+
+        <!-- Account Balances Table -->
+        <div class="card">
+            <h2>Account Balances</h2>
+            <div class="info-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Account balances grow at the specified rate of return, reduced by distributions. RMDs begin at age 73 for Bob and age 75 for Susan.</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="balanceTable"></table>
+            </div>
+        </div>
+
+        <!-- Tax Analysis Table -->
+        <div class="card">
+            <h2>Tax Analysis</h2>
+            <div class="info-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Federal tax is calculated using the 2024 married filing jointly brackets. State tax is a flat rate on taxable income.</span>
+            </div>
+            <div class="table-wrapper">
+                <table id="taxTable"></table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA & CONFIGURATION ====================
+
+        const TAX_BRACKETS = [
+            { from: 0, to: 24800, rate: 0.10, cumulative: 0 },
+            { from: 24801, to: 100800, rate: 0.12, cumulative: 2480 },
+            { from: 100801, to: 211400, rate: 0.22, cumulative: 11600 },
+            { from: 211401, to: 403550, rate: 0.24, cumulative: 35932 },
+            { from: 403551, to: 512450, rate: 0.32, cumulative: 82048 },
+            { from: 512451, to: 768700, rate: 0.35, cumulative: 116896 },
+            { from: 768701, to: Infinity, rate: 0.37, cumulative: 206583.5 }
+        ];
+
+        const RMD_TABLE = {
+            70: 27.4, 71: 26.5, 72: 25.6, 73: 26.5, 74: 25.5, 75: 24.6,
+            76: 23.7, 77: 22.9, 78: 22.0, 79: 21.1, 80: 20.2, 81: 19.4,
+            82: 18.5, 83: 17.7, 84: 16.8, 85: 16.0, 86: 15.2, 87: 14.4,
+            88: 13.7, 89: 12.9, 90: 12.2, 91: 11.5, 92: 10.8, 93: 10.1,
+            94: 9.5, 95: 8.9, 96: 8.4, 97: 7.8, 98: 7.3, 99: 6.8,
+            100: 6.4, 101: 6.0, 102: 5.6, 103: 5.2, 104: 4.9, 105: 4.6,
+            106: 4.3, 107: 4.1, 108: 3.9, 109: 3.7, 110: 3.5, 111: 3.4,
+            112: 3.3, 113: 3.1, 114: 3.0, 115: 2.9, 116: 2.8, 117: 2.7,
+            118: 2.5, 119: 2.3, 120: 2.0
+        };
+
+        const MODEL_START_YEAR = 2026;
+        const MODEL_END_YEAR = 2052;
+        const ALL_YEARS = [];
+        for (let y = MODEL_START_YEAR; y <= MODEL_END_YEAR; y++) ALL_YEARS.push(y);
+
+        let displayStartYear = 2027;
+        let displayEndYear = 2036;
+        let YEARS = [];
+
+        function rebuildDisplayYears() {
+            YEARS = [];
+            for (let y = displayStartYear; y <= displayEndYear; y++) YEARS.push(y);
+        }
+        rebuildDisplayYears();
+
+        const START_YEAR = MODEL_START_YEAR;
+        let END_YEAR = displayEndYear;
+
+        const BOB_BASE_AGE = 64;
+        const SUSAN_BASE_AGE = 74;
+
+        // ==================== SCENARIO PRESETS ====================
+
+        const SCENARIOS = {
+            conservative: {
+                bobsIRA: 1025000,
+                bobsIRAROI: 6,
+                bobsRoth: 300000,
+                bobsRothROI: 6,
+                susansIRA: 800000,
+                susansIRAROI: 6,
+                etradeIRA: 1583637,
+                etradeIRAROI: 6,
+                wellsFargo: 2000000,
+                interestRate: 4,
+                inflationRate: 3,
+                incomeTarget: 325000,
+                itemizedDeductions: 78000,
+                stateTaxRate: 6,
+                bobsPension: 134686,
+                susansPension: 22000,
+                susansSS: 21600,
+                bobsSS: 61032
+            },
+            aggressive: {
+                bobsIRA: 1025000,
+                bobsIRAROI: 13,
+                bobsRoth: 300000,
+                bobsRothROI: 17,
+                susansIRA: 800000,
+                susansIRAROI: 9.5,
+                etradeIRA: 1583637,
+                etradeIRAROI: 9.5,
+                wellsFargo: 2000000,
+                interestRate: 4,
+                inflationRate: 3,
+                incomeTarget: 325000,
+                itemizedDeductions: 78000,
+                stateTaxRate: 6,
+                bobsPension: 134686,
+                susansPension: 22000,
+                susansSS: 21600,
+                bobsSS: 61032
+            }
+        };
+
+        let currentScenario = 'conservative';
+
+        function applyScenario(scenarioName) {
+            const scenario = SCENARIOS[scenarioName];
+            if (!scenario) return;
+
+            currentScenario = scenarioName;
+
+            // Update all input fields
+            document.getElementById('bobsIRA').value = scenario.bobsIRA;
+            document.getElementById('bobsIRAROI').value = scenario.bobsIRAROI;
+            document.getElementById('bobsRoth').value = scenario.bobsRoth;
+            document.getElementById('bobsRothROI').value = scenario.bobsRothROI;
+            document.getElementById('susansIRA').value = scenario.susansIRA;
+            document.getElementById('susansIRAROI').value = scenario.susansIRAROI;
+            document.getElementById('etradeIRA').value = scenario.etradeIRA;
+            document.getElementById('etradeIRAROI').value = scenario.etradeIRAROI;
+            document.getElementById('wellsFargo').value = scenario.wellsFargo;
+            document.getElementById('interestRate').value = scenario.interestRate;
+            document.getElementById('inflationRate').value = scenario.inflationRate;
+            document.getElementById('incomeTarget').value = scenario.incomeTarget;
+            document.getElementById('itemizedDeductions').value = scenario.itemizedDeductions;
+            document.getElementById('stateTaxRate').value = scenario.stateTaxRate;
+            document.getElementById('bobsPension').value = scenario.bobsPension;
+            document.getElementById('susansPension').value = scenario.susansPension;
+            document.getElementById('susansSS').value = scenario.susansSS;
+            document.getElementById('bobsSS').value = scenario.bobsSS;
+
+            // Update button states
+            document.getElementById('conservativeBtn').classList.toggle('active', scenarioName === 'conservative');
+            document.getElementById('aggressiveBtn').classList.toggle('active', scenarioName === 'aggressive');
+
+            // Switch to the correct baseline for this scenario
+            if (scenarioBaselines[scenarioName]) {
+                baselineResults = scenarioBaselines[scenarioName];
+            }
+
+            // Recalculate
+            updateDashboard();
+        }
+
+        // ==================== YEAR RANGE SELECTOR ====================
+
+        function initYearSelectors() {
+            const startSelect = document.getElementById('startYearSelect');
+            const endSelect = document.getElementById('endYearSelect');
+
+            ALL_YEARS.forEach(year => {
+                const startOption = document.createElement('option');
+                startOption.value = year;
+                startOption.textContent = year;
+                startSelect.appendChild(startOption);
+
+                const endOption = document.createElement('option');
+                endOption.value = year;
+                endOption.textContent = year;
+                endSelect.appendChild(endOption);
+            });
+
+            startSelect.value = displayStartYear;
+            endSelect.value = displayEndYear;
+        }
+
+        function setPresetRange(startYear, endYear) {
+            displayStartYear = startYear;
+            displayEndYear = endYear;
+            END_YEAR = endYear;
+            rebuildDisplayYears();
+
+            // Update all preset button states
+            document.getElementById('range10Btn').classList.toggle('active', startYear === 2026 && endYear === 2035);
+            document.getElementById('range15Btn').classList.toggle('active', startYear === 2026 && endYear === 2040);
+            document.getElementById('range20Btn').classList.toggle('active', startYear === 2026 && endYear === 2045);
+            document.getElementById('range25Btn').classList.toggle('active', startYear === 2026 && endYear === 2050);
+            document.getElementById('range27Btn').classList.toggle('active', startYear === 2026 && endYear === 2052);
+            document.getElementById('rangeCustomBtn').classList.remove('active');
+            document.getElementById('customRangeControls').classList.remove('visible');
+
+            document.getElementById('startYearSelect').value = startYear;
+            document.getElementById('endYearSelect').value = endYear;
+
+            updateRangeInfo();
+            updateDashboard();
+        }
+
+        function enableCustomRange() {
+            document.getElementById('range10Btn').classList.remove('active');
+            document.getElementById('range15Btn').classList.remove('active');
+            document.getElementById('range20Btn').classList.remove('active');
+            document.getElementById('range25Btn').classList.remove('active');
+            document.getElementById('range27Btn').classList.remove('active');
+            document.getElementById('rangeCustomBtn').classList.add('active');
+            document.getElementById('customRangeControls').classList.add('visible');
+        }
+
+        function updateCustomRange() {
+            const startYear = parseInt(document.getElementById('startYearSelect').value);
+            const endYear = parseInt(document.getElementById('endYearSelect').value);
+
+            if (startYear > endYear) {
+                document.getElementById('endYearSelect').value = startYear;
+                displayEndYear = startYear;
+            } else {
+                displayEndYear = endYear;
+            }
+            displayStartYear = startYear;
+            END_YEAR = displayEndYear;
+            rebuildDisplayYears();
+
+            document.getElementById('range10Btn').classList.remove('active');
+            document.getElementById('range15Btn').classList.remove('active');
+            document.getElementById('range20Btn').classList.remove('active');
+            document.getElementById('range25Btn').classList.remove('active');
+            document.getElementById('range27Btn').classList.remove('active');
+            document.getElementById('rangeCustomBtn').classList.add('active');
+
+            updateRangeInfo();
+            updateDashboard();
+        }
+
+        function updateRangeInfo() {
+            const bobStartAge = BOB_BASE_AGE + (displayStartYear - MODEL_START_YEAR);
+            const bobEndAge = BOB_BASE_AGE + (displayEndYear - MODEL_START_YEAR);
+            const susanStartAge = SUSAN_BASE_AGE + (displayStartYear - MODEL_START_YEAR);
+            const susanEndAge = SUSAN_BASE_AGE + (displayEndYear - MODEL_START_YEAR);
+            document.getElementById('rangeInfo').innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Bob age ${bobStartAge}-${bobEndAge}, Susan age ${susanStartAge}-${susanEndAge}
+            `;
+        }
+
+        // ==================== BASELINE COMPARISON ====================
+
+        let baselineResults = null;
+        let baselineTimestamp = null;
+        let scenarioBaselines = {
+            conservative: null,
+            aggressive: null
+        };
+
+        function saveBaseline() {
+            const savedDisplayStart = displayStartYear;
+            const savedDisplayEnd = displayEndYear;
+            const savedScenario = currentScenario;
+
+            displayStartYear = MODEL_START_YEAR;
+            displayEndYear = MODEL_END_YEAR;
+            rebuildDisplayYears();
+
+            // Save baseline for Conservative scenario
+            applyScenarioValues('conservative');
+            scenarioBaselines.conservative = calculateModel();
+
+            // Save baseline for Aggressive scenario
+            applyScenarioValues('aggressive');
+            scenarioBaselines.aggressive = calculateModel();
+
+            // Restore original scenario and set its baseline as current
+            applyScenarioValues(savedScenario);
+            baselineResults = scenarioBaselines[savedScenario];
+            baselineTimestamp = new Date().toLocaleString();
+
+            displayStartYear = savedDisplayStart;
+            displayEndYear = savedDisplayEnd;
+            rebuildDisplayYears();
+
+            document.getElementById('saveBaselineBtn').innerHTML = `
+                <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Update Baseline
+            `;
+            document.getElementById('saveBaselineBtn').classList.add('active');
+            document.getElementById('clearBaselineBtn').style.display = 'inline-block';
+            document.getElementById('baselineStatus').classList.add('active');
+            document.getElementById('baselineStatusText').textContent = `Baseline saved: ${baselineTimestamp}`;
+
+            updateDashboard();
+        }
+
+        // Helper to apply scenario values without triggering dashboard update
+        function applyScenarioValues(scenarioName) {
+            const scenario = SCENARIOS[scenarioName];
+            if (!scenario) return;
+
+            document.getElementById('bobsIRA').value = scenario.bobsIRA;
+            document.getElementById('bobsIRAROI').value = scenario.bobsIRAROI;
+            document.getElementById('bobsRoth').value = scenario.bobsRoth;
+            document.getElementById('bobsRothROI').value = scenario.bobsRothROI;
+            document.getElementById('susansIRA').value = scenario.susansIRA;
+            document.getElementById('susansIRAROI').value = scenario.susansIRAROI;
+            document.getElementById('etradeIRA').value = scenario.etradeIRA;
+            document.getElementById('etradeIRAROI').value = scenario.etradeIRAROI;
+            document.getElementById('wellsFargo').value = scenario.wellsFargo;
+            document.getElementById('interestRate').value = scenario.interestRate;
+            document.getElementById('inflationRate').value = scenario.inflationRate;
+            document.getElementById('incomeTarget').value = scenario.incomeTarget;
+            document.getElementById('itemizedDeductions').value = scenario.itemizedDeductions;
+            document.getElementById('stateTaxRate').value = scenario.stateTaxRate;
+            document.getElementById('bobsPension').value = scenario.bobsPension;
+            document.getElementById('susansPension').value = scenario.susansPension;
+            document.getElementById('susansSS').value = scenario.susansSS;
+            document.getElementById('bobsSS').value = scenario.bobsSS;
+        }
+
+        function clearBaseline() {
+            baselineResults = null;
+            baselineTimestamp = null;
+            scenarioBaselines = {
+                conservative: null,
+                aggressive: null
+            };
+
+            document.getElementById('saveBaselineBtn').innerHTML = `
+                <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save as Baseline
+            `;
+            document.getElementById('saveBaselineBtn').classList.remove('active');
+            document.getElementById('clearBaselineBtn').style.display = 'none';
+            document.getElementById('baselineStatus').classList.remove('active');
+            document.getElementById('baselineStatusText').textContent = 'No baseline set';
+
+            updateDashboard();
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+
+        function getRMDFactor(age) {
+            if (age < 73) return 0;
+            return RMD_TABLE[age] || RMD_TABLE[105];
+        }
+
+        function calculateFederalTax(taxableIncome) {
+            if (taxableIncome <= 0) return 0;
+            for (let i = TAX_BRACKETS.length - 1; i >= 0; i--) {
+                const bracket = TAX_BRACKETS[i];
+                if (taxableIncome >= bracket.from) {
+                    return bracket.cumulative + (taxableIncome - bracket.from) * bracket.rate;
+                }
+            }
+            return 0;
+        }
+
+        function getMarginalRate(taxableIncome) {
+            for (let i = TAX_BRACKETS.length - 1; i >= 0; i--) {
+                if (taxableIncome >= TAX_BRACKETS[i].from) {
+                    return TAX_BRACKETS[i].rate;
+                }
+            }
+            return 0.10;
+        }
+
+        function formatCurrency(value) {
+            if (value === undefined || value === null || isNaN(value)) return '-';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            if (value === undefined || value === null || isNaN(value)) return '-';
+            return (value * 100).toFixed(1) + '%';
+        }
+
+        function formatCompact(value) {
+            if (value >= 1000000) return '$' + (value / 1000000).toFixed(2) + 'M';
+            if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+            return formatCurrency(value);
+        }
+
+        // ==================== COLLAPSIBLE SECTION TOGGLE ====================
+
+        function toggleSection(header) {
+            const caret = header.querySelector('.caret');
+            const content = header.nextElementSibling;
+            caret.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        }
+
+        // ==================== MODEL CALCULATION ====================
+
+        function calculateModel() {
+            const bobsIRAROI = 1 + parseFloat(document.getElementById('bobsIRAROI').value) / 100;
+            const bobsRothROI = 1 + parseFloat(document.getElementById('bobsRothROI').value) / 100;
+            const susansIRAROI = 1 + parseFloat(document.getElementById('susansIRAROI').value) / 100;
+            const etradeIRAROI = 1 + parseFloat(document.getElementById('etradeIRAROI').value) / 100;
+            const inflationRate = 1 + parseFloat(document.getElementById('inflationRate').value) / 100;
+            const incomeTarget = parseFloat(document.getElementById('incomeTarget').value);
+            const itemizedDeductions = parseFloat(document.getElementById('itemizedDeductions').value);
+            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const stateTaxRate = parseFloat(document.getElementById('stateTaxRate').value) / 100;
+
+            const initialBobsIRA = parseFloat(document.getElementById('bobsIRA').value);
+            const initialBobsRoth = parseFloat(document.getElementById('bobsRoth').value);
+            const initialSusansIRA = parseFloat(document.getElementById('susansIRA').value);
+            const initialEtradeIRA = parseFloat(document.getElementById('etradeIRA').value);
+            const initialWellsFargo = parseFloat(document.getElementById('wellsFargo').value);
+
+            const bobsPension = parseFloat(document.getElementById('bobsPension').value);
+            const susansPension = parseFloat(document.getElementById('susansPension').value);
+            const susansSS = parseFloat(document.getElementById('susansSS').value);
+            const bobsSSat70 = parseFloat(document.getElementById('bobsSS').value);
+
+            const ROTH_TARGET_INCOME = 403550;
+
+            const results = {};
+
+            let bobsIRA = initialBobsIRA;
+            let bobsRoth = initialBobsRoth;
+            let susansIRA = initialSusansIRA;
+            let etradeIRA = initialEtradeIRA;
+            let wellsFargo = initialWellsFargo;
+
+            ALL_YEARS.forEach((year, idx) => {
+                const yearOffset = year - MODEL_START_YEAR;
+                const bobAge = BOB_BASE_AGE + yearOffset;
+                const susanAge = SUSAN_BASE_AGE + yearOffset;
+                const yearData = {};
+
+                yearData.bobAge = bobAge;
+                yearData.susanAge = susanAge;
+
+                yearData.bobsIRAStart = bobsIRA;
+                yearData.bobsRothStart = bobsRoth;
+                yearData.susansIRAStart = susansIRA;
+                yearData.etradeIRAStart = etradeIRA;
+                yearData.wellsFargoStart = wellsFargo;
+
+                if (year === 2026) {
+                    yearData.netIncomeTarget = 0;
+                } else if (year <= 2037) {
+                    yearData.netIncomeTarget = incomeTarget * Math.pow(inflationRate, year - 2027);
+                } else {
+                    yearData.netIncomeTarget = incomeTarget * Math.pow(inflationRate, 10);
+                }
+
+                yearData.bobsPension = bobsPension;
+                yearData.susansPension = susansPension;
+                yearData.susansSS = susansSS;
+
+                if (bobAge >= 70) {
+                    const yearsAfter70 = bobAge - 70;
+                    yearData.bobsSS = bobsSSat70 * Math.pow(1.02, yearsAfter70);
+                } else {
+                    yearData.bobsSS = 0;
+                }
+
+                if (year === 2026) {
+                    yearData.susansRMD = 0;
+                    yearData.etradeRMD = 0;
+                    yearData.bobsIRADist = 0;
+                    yearData.rothConversion = 0;
+                    yearData.wellsFargoWithdrawal = 0;
+                    yearData.interestIncome = 0;
+                    yearData.rothWithdrawal = 0;
+
+                    yearData.bobsIRAEnd = bobsIRA;
+                    yearData.bobsRothEnd = bobsRoth;
+                    yearData.susansIRAEnd = susansIRA;
+                    yearData.etradeIRAEnd = etradeIRA;
+                    yearData.wellsFargoEnd = wellsFargo;
+                } else {
+                    const prevWellsFargo = results[year - 1].wellsFargoEnd;
+                    yearData.interestIncome = interestRate * prevWellsFargo;
+
+                    const prevSusansIRA = results[year - 1].susansIRAEnd;
+                    if (susanAge >= 75) {
+                        yearData.susansRMD = prevSusansIRA / getRMDFactor(susanAge);
+                    } else {
+                        yearData.susansRMD = 0;
+                    }
+
+                    const prevEtradeIRA = results[year - 1].etradeIRAEnd;
+                    if (bobAge >= 73) {
+                        yearData.etradeRMD = prevEtradeIRA / getRMDFactor(bobAge);
+                    } else {
+                        yearData.etradeRMD = 0;
+                    }
+
+                    const baseTaxableBeforeRoth = bobsPension + susansPension + susansSS + yearData.bobsSS +
+                        yearData.susansRMD + yearData.etradeRMD + yearData.interestIncome - itemizedDeductions;
+
+                    const prevBobsIRA = results[year - 1].bobsIRAEnd;
+                    if (bobAge <= 71 && year <= 2033) {
+                        const targetConversion = ROTH_TARGET_INCOME - baseTaxableBeforeRoth;
+                        yearData.rothConversion = Math.max(0, Math.min(targetConversion, prevBobsIRA));
+                    } else {
+                        yearData.rothConversion = 0;
+                    }
+
+                    if (bobAge >= 73) {
+                        yearData.bobsIRADist = prevBobsIRA / getRMDFactor(bobAge);
+                    } else {
+                        yearData.bobsIRADist = yearData.rothConversion;
+                    }
+
+                    yearData.rothWithdrawal = 0;
+
+                    let grossIncomeBeforeRoth = bobsPension + susansPension + susansSS + yearData.bobsSS +
+                        yearData.susansRMD + yearData.etradeRMD + yearData.interestIncome;
+
+                    if (year === 2035) {
+                        grossIncomeBeforeRoth += yearData.bobsIRADist;
+                    }
+
+                    const grossIncomeWithRoth = grossIncomeBeforeRoth + yearData.rothConversion;
+                    const taxableWithRoth = baseTaxableBeforeRoth + yearData.rothConversion;
+                    const netTaxableForTax = grossIncomeWithRoth - itemizedDeductions;
+
+                    yearData.netTaxableIncome = taxableWithRoth;
+                    yearData.grossTaxableIncome = grossIncomeWithRoth;
+
+                    yearData.federalTax = calculateFederalTax(netTaxableForTax);
+                    yearData.stateTax = netTaxableForTax * stateTaxRate;
+                    yearData.totalTax = yearData.federalTax + yearData.stateTax;
+                    yearData.marginalRate = getMarginalRate(netTaxableForTax);
+                    yearData.effectiveFederalRate = netTaxableForTax > 0 ? yearData.federalTax / netTaxableForTax : 0;
+                    yearData.effectiveTotalRate = netTaxableForTax > 0 ? yearData.totalTax / netTaxableForTax : 0;
+
+                    yearData.afterTaxIncome = yearData.grossTaxableIncome - yearData.totalTax;
+
+                    const incomeFromTaxableSources = yearData.afterTaxIncome - yearData.rothConversion;
+                    yearData.wellsFargoWithdrawal = Math.max(0, yearData.netIncomeTarget - incomeFromTaxableSources);
+
+                    yearData.bobsRothEnd = results[year - 1].bobsRothEnd * bobsRothROI - yearData.rothWithdrawal + yearData.rothConversion;
+                    yearData.susansIRAEnd = prevSusansIRA * susansIRAROI - yearData.susansRMD;
+                    yearData.bobsIRAEnd = prevBobsIRA * bobsIRAROI - yearData.bobsIRADist;
+                    yearData.etradeIRAEnd = prevEtradeIRA * etradeIRAROI - yearData.etradeRMD;
+                    yearData.wellsFargoEnd = prevWellsFargo * (1 + interestRate) - yearData.wellsFargoWithdrawal;
+                }
+
+                yearData.totalNetWorth = yearData.bobsIRAEnd + yearData.bobsRothEnd +
+                    yearData.susansIRAEnd + yearData.etradeIRAEnd + yearData.wellsFargoEnd;
+
+                yearData.totalNetIncome = (yearData.afterTaxIncome || 0) - yearData.rothConversion +
+                    yearData.wellsFargoWithdrawal + yearData.rothWithdrawal;
+                yearData.monthlyNetIncome = yearData.netIncomeTarget / 12;
+
+                yearData.totalIncomeSources = yearData.bobsPension + yearData.susansPension +
+                    yearData.susansSS + yearData.bobsSS + yearData.susansRMD + yearData.etradeRMD +
+                    yearData.bobsIRADist + yearData.rothWithdrawal + yearData.wellsFargoWithdrawal;
+
+                results[year] = yearData;
+            });
+
+            return results;
+        }
+
+        // ==================== RENDERING FUNCTIONS ====================
+
+        function renderSummaryMetrics(results) {
+            const container = document.getElementById('summaryMetrics');
+            const lastYear = results[displayEndYear];
+            const firstYear = results[displayStartYear];
+            const year2052 = results[2052];
+
+            let totalRothConversions = 0;
+            let totalTaxes = 0;
+            YEARS.forEach(year => {
+                totalRothConversions += results[year].rothConversion;
+                totalTaxes += results[year].totalTax;
+            });
+
+            let baselineTotalRoth = 0;
+            let baselineTotalTaxes = 0;
+            if (baselineResults) {
+                YEARS.forEach(year => {
+                    if (baselineResults[year]) {
+                        baselineTotalRoth += baselineResults[year].rothConversion;
+                        baselineTotalTaxes += baselineResults[year].totalTax;
+                    }
+                });
+            }
+
+            const numYears = YEARS.length;
+            const metrics = [
+                {
+                    label: `Net Worth (${displayStartYear})`,
+                    value: formatCompact(firstYear.totalNetWorth),
+                    baseline: baselineResults && baselineResults[displayStartYear] ? baselineResults[displayStartYear].totalNetWorth : null,
+                    currentVal: firstYear.totalNetWorth,
+                    icon: 'blue',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>'
+                },
+                {
+                    label: `Net Worth (${displayEndYear})`,
+                    value: formatCompact(lastYear.totalNetWorth),
+                    baseline: baselineResults && baselineResults[displayEndYear] ? baselineResults[displayEndYear].totalNetWorth : null,
+                    currentVal: lastYear.totalNetWorth,
+                    icon: 'green',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>'
+                },
+                {
+                    label: 'Net Worth (2052)',
+                    value: formatCompact(year2052.totalNetWorth),
+                    baseline: baselineResults && baselineResults[2052] ? baselineResults[2052].totalNetWorth : null,
+                    currentVal: year2052.totalNetWorth,
+                    icon: 'green',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+                    permanent: true
+                },
+                {
+                    label: 'Total Roth Conversions',
+                    value: formatCompact(totalRothConversions),
+                    baseline: baselineResults ? baselineTotalRoth : null,
+                    currentVal: totalRothConversions,
+                    icon: 'purple',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>'
+                },
+                {
+                    label: `Roth Balance (${displayEndYear})`,
+                    value: formatCompact(lastYear.bobsRothEnd),
+                    baseline: baselineResults && baselineResults[displayEndYear] ? baselineResults[displayEndYear].bobsRothEnd : null,
+                    currentVal: lastYear.bobsRothEnd,
+                    icon: 'cyan',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>'
+                },
+                {
+                    label: `Total Taxes (${numYears} yr)`,
+                    value: formatCompact(totalTaxes),
+                    baseline: baselineResults ? baselineTotalTaxes : null,
+                    invertColor: true,
+                    currentVal: totalTaxes,
+                    icon: 'orange',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>'
+                },
+                {
+                    label: `${displayEndYear} Monthly Income`,
+                    value: formatCompact(lastYear.monthlyNetIncome),
+                    baseline: baselineResults && baselineResults[displayEndYear] ? baselineResults[displayEndYear].monthlyNetIncome : null,
+                    currentVal: lastYear.monthlyNetIncome,
+                    icon: 'blue',
+                    iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+                }
+            ];
+
+            container.innerHTML = metrics.map(m => {
+                let comparison = '';
+                if (m.baseline !== null) {
+                    const diff = m.currentVal - m.baseline;
+                    if (Math.abs(diff) >= 1) {
+                        const formatted = (diff > 0 ? '+' : '') + formatCompact(diff);
+                        let className;
+                        if (m.invertColor) {
+                            className = diff < 0 ? 'positive' : diff > 0 ? 'negative' : 'neutral';
+                        } else {
+                            className = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
+                        }
+                        const arrow = diff > 0 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+                        comparison = `<div class="metric-comparison ${className}">${arrow}${formatted}</div>`;
+                    }
+                }
+                const permanentClass = m.permanent ? ' permanent' : '';
+                return `
+                    <div class="metric-card${permanentClass}">
+                        <div class="metric-header">
+                            <span class="metric-label">${m.label}</span>
+                            <div class="metric-icon ${m.icon}">${m.iconSvg}</div>
+                        </div>
+                        <div class="metric-value">${m.value}</div>
+                        ${comparison}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderIncomeTable(results) {
+            const table = document.getElementById('incomeTable');
+            const rows = [
+                { label: 'Age (Bob / Susan)', key: 'age' },
+                { label: "Bob's Pension", key: 'bobsPension' },
+                { label: "Susan's Pension", key: 'susansPension' },
+                { label: "Susan's Social Security", key: 'susansSS' },
+                { label: "Bob's Social Security", key: 'bobsSS' },
+                { label: "Susan's IRA (RMD)", key: 'susansRMD' },
+                { label: "eTrade IRA (RMD)", key: 'etradeRMD' },
+                { label: "Bob's IRA Distribution", key: 'bobsIRADist' },
+                { label: "Roth Withdrawal", key: 'rothWithdrawal' },
+                { label: "Wells Fargo Withdrawal", key: 'wellsFargoWithdrawal' },
+                { label: "Interest Income", key: 'interestIncome' },
+                { label: "Total Income Sources", key: 'totalIncomeSources', highlight: true },
+                { label: "Roth Conversion", key: 'rothConversion', highlight: true },
+                { label: "Total Taxes", key: 'totalTax' },
+                { label: "Net Income Target", key: 'netIncomeTarget', highlight: true },
+                { label: "Total Net Income", key: 'totalNetIncome', highlight: true },
+                { label: "Monthly After-Tax", key: 'monthlyNetIncome', highlight: true }
+            ];
+
+            let html = '<thead><tr><th>Income Source</th>';
+            YEARS.forEach(year => html += `<th>${year}</th>`);
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(row => {
+                const highlightClass = row.highlight ? 'highlight' : '';
+                html += `<tr class="${highlightClass}"><td>${row.label}</td>`;
+                YEARS.forEach(year => {
+                    const data = results[year];
+                    let value;
+                    if (row.key === 'age') {
+                        value = `${data.bobAge} / ${data.susanAge}`;
+                    } else {
+                        value = formatCurrency(data[row.key]);
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function renderAfterTaxTable(results) {
+            const table = document.getElementById('afterTaxTable');
+
+            // After-tax income table shows spendable income
+            // Uses totalNetIncome which is correctly calculated as:
+            // (gross taxable income - total taxes) - Roth conversion + tax-free withdrawals
+            // Note: Bob's IRA Distribution excluded - it's a Roth conversion, not spendable income
+            const rows = [
+                { label: 'Age (Bob / Susan)', key: 'age' },
+                { label: "Gross Taxable Income", key: 'grossTaxableExConversion' },
+                { label: "Less: Total Taxes", key: 'totalTax', negative: true },
+                { label: "After-Tax from Taxable", key: 'afterTaxFromTaxable', subtotal: true },
+                { label: "Roth Withdrawal (Tax-Free)", key: 'rothWithdrawal' },
+                { label: "Wells Fargo (Tax-Free)", key: 'wellsFargoWithdrawal' },
+                { label: "Total Spendable Income", key: 'totalNetIncome', highlight: true },
+                { label: "Monthly Spendable", key: 'monthlyNetIncome', highlight: true }
+            ];
+
+            let html = '<thead><tr><th>Item</th>';
+            YEARS.forEach(year => html += `<th>${year}</th>`);
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(row => {
+                const highlightClass = row.highlight ? 'highlight' : (row.subtotal ? 'subtotal' : '');
+                html += `<tr class="${highlightClass}"><td>${row.label}</td>`;
+                YEARS.forEach(year => {
+                    const data = results[year];
+                    let value;
+                    if (row.key === 'age') {
+                        value = `${data.bobAge} / ${data.susanAge}`;
+                    } else if (row.key === 'grossTaxableExConversion') {
+                        // Gross taxable income excluding Roth conversion (which isn't spendable)
+                        const grossExConversion = data.grossTaxableIncome - data.rothConversion;
+                        value = formatCurrency(grossExConversion);
+                    } else if (row.key === 'afterTaxFromTaxable') {
+                        // After-tax income from taxable sources (gross taxable ex-conversion minus taxes)
+                        const grossExConversion = data.grossTaxableIncome - data.rothConversion;
+                        const afterTaxFromTaxable = grossExConversion - data.totalTax;
+                        value = formatCurrency(afterTaxFromTaxable);
+                    } else if (row.key === 'monthlyNetIncome') {
+                        value = formatCurrency(data.totalNetIncome / 12);
+                    } else if (row.negative) {
+                        value = formatCurrency(-data[row.key]);
+                    } else {
+                        value = formatCurrency(data[row.key]);
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function renderBalanceTable(results) {
+            const table = document.getElementById('balanceTable');
+
+            const rows = [
+                { label: "Bob's Roth IRA", key: 'bobsRothEnd' },
+                { label: "Susan's IRA", key: 'susansIRAEnd' },
+                { label: "Bob's IRA", key: 'bobsIRAEnd' },
+                { label: "eTrade IRA", key: 'etradeIRAEnd' },
+                { label: "Wells Fargo Brokerage", key: 'wellsFargoEnd' },
+                { label: "Total Net Worth", key: 'totalNetWorth', highlight: true }
+            ];
+
+            let html = '<thead><tr><th>Account</th>';
+            YEARS.forEach(year => html += `<th>${year}</th>`);
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(row => {
+                const highlightClass = row.highlight ? 'highlight' : '';
+                html += `<tr class="${highlightClass}"><td>${row.label}</td>`;
+                YEARS.forEach(year => {
+                    html += `<td>${formatCurrency(results[year][row.key])}</td>`;
+                });
+                html += '</tr>';
+
+                if (baselineResults && row.key === 'totalNetWorth') {
+                    html += `<tr class="comparison-row"><td>vs Baseline</td>`;
+                    YEARS.forEach(year => {
+                        const diff = results[year][row.key] - baselineResults[year][row.key];
+                        const diffClass = diff > 0 ? 'positive' : diff < 0 ? 'negative' : '';
+                        const formatted = Math.abs(diff) >= 1 ? (diff > 0 ? '+' : '') + formatCurrency(diff) : '-';
+                        html += `<td class="${diffClass}">${formatted}</td>`;
+                    });
+                    html += '</tr>';
+                }
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function renderTaxTable(results) {
+            const table = document.getElementById('taxTable');
+            const rows = [
+                { label: "Gross Taxable Income", key: 'grossTaxableIncome' },
+                { label: "Itemized Deductions", key: 'deductions' },
+                { label: "Net Taxable Income", key: 'netTaxableIncome' },
+                { label: "Federal Income Tax", key: 'federalTax' },
+                { label: "State Income Tax", key: 'stateTax' },
+                { label: "Total Taxes", key: 'totalTax', highlight: true },
+                { label: "Marginal Rate", key: 'marginalRate', isPercent: true },
+                { label: "Effective Federal Rate", key: 'effectiveFederalRate', isPercent: true },
+                { label: "Effective Total Rate", key: 'effectiveTotalRate', isPercent: true }
+            ];
+
+            const itemizedDeductions = parseFloat(document.getElementById('itemizedDeductions').value);
+
+            let html = '<thead><tr><th>Tax Item</th>';
+            YEARS.forEach(year => html += `<th>${year}</th>`);
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(row => {
+                const highlightClass = row.highlight ? 'highlight' : '';
+                html += `<tr class="${highlightClass}"><td>${row.label}</td>`;
+                YEARS.forEach(year => {
+                    let value;
+                    if (row.key === 'deductions') {
+                        value = formatCurrency(itemizedDeductions);
+                    } else if (row.isPercent) {
+                        value = formatPercent(results[year][row.key]);
+                    } else {
+                        value = formatCurrency(results[year][row.key]);
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        // ==================== CHART FUNCTIONS ====================
+
+        let balanceChart, incomeChart, afterTaxChart, afterTaxDetailChart, taxChart, rothChart, netWorthChart;
+
+        // Chart.js global config
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = 'rgba(99, 102, 241, 0.1)';
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+
+        function createCharts(results) {
+            // Colors matched to income bar charts
+            const chartColors = {
+                bobsRoth: 'rgba(99, 102, 241, 1)',      // Purple (matches Bob's Pension)
+                susansIRA: 'rgba(139, 92, 246, 1)',    // Purple (matches Susan's Pension)
+                bobsIRA: 'rgba(245, 158, 11, 1)',      // Orange (matches Bob's IRA Dist)
+                etradeIRA: 'rgba(251, 191, 36, 1)',    // Amber (matches eTrade RMD)
+                wellsFargo: 'rgba(16, 185, 129, 1)',   // Green (matches Wells Fargo)
+                total: 'rgba(255, 255, 255, 0.9)'
+            };
+
+            const chartColorsBg = {
+                bobsRoth: 'rgba(99, 102, 241, 0.1)',
+                susansIRA: 'rgba(139, 92, 246, 0.1)',
+                bobsIRA: 'rgba(245, 158, 11, 0.1)',
+                etradeIRA: 'rgba(251, 191, 36, 0.1)',
+                wellsFargo: 'rgba(16, 185, 129, 0.1)',
+            };
+
+            // Balance Chart
+            const balanceCtx = document.getElementById('balanceChart').getContext('2d');
+            if (balanceChart) balanceChart.destroy();
+            balanceChart = new Chart(balanceCtx, {
+                type: 'line',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        {
+                            label: "Bob's Roth",
+                            data: YEARS.map(y => results[y].bobsRothEnd),
+                            borderColor: chartColors.bobsRoth,
+                            backgroundColor: chartColorsBg.bobsRoth,
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: "Susan's IRA",
+                            data: YEARS.map(y => results[y].susansIRAEnd),
+                            borderColor: chartColors.susansIRA,
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: "Bob's IRA",
+                            data: YEARS.map(y => results[y].bobsIRAEnd),
+                            borderColor: chartColors.bobsIRA,
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: "eTrade IRA",
+                            data: YEARS.map(y => results[y].etradeIRAEnd),
+                            borderColor: chartColors.etradeIRA,
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: "Wells Fargo",
+                            data: YEARS.map(y => results[y].wellsFargoEnd),
+                            borderColor: chartColors.wellsFargo,
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: true, mode: 'nearest' },
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'circle', padding: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleFont: { weight: '600' },
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`,
+                                footer: (items, data) => {
+                                    if (items.length === 0) return '';
+                                    const dataIndex = items[0].dataIndex;
+                                    const chart = items[0].chart;
+                                    let total = 0;
+                                    chart.data.datasets.forEach(dataset => {
+                                        total += dataset.data[dataIndex] || 0;
+                                    });
+                                    return `Total: ${formatCurrency(total)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            ticks: { callback: value => '$' + (value / 1000000).toFixed(1) + 'M' },
+                            grid: { color: 'rgba(99, 102, 241, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Net Worth Stacked Bar Chart
+            const netWorthCtx = document.getElementById('netWorthChart').getContext('2d');
+            if (netWorthChart) netWorthChart.destroy();
+            netWorthChart = new Chart(netWorthCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        {
+                            label: "Bob's Roth",
+                            data: YEARS.map(y => results[y].bobsRothEnd),
+                            backgroundColor: 'rgba(99, 102, 241, 0.9)',
+                            borderColor: 'rgba(99, 102, 241, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: "Susan's IRA",
+                            data: YEARS.map(y => results[y].susansIRAEnd),
+                            backgroundColor: 'rgba(139, 92, 246, 0.9)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: "Bob's IRA",
+                            data: YEARS.map(y => results[y].bobsIRAEnd),
+                            backgroundColor: 'rgba(245, 158, 11, 0.9)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: "eTrade IRA",
+                            data: YEARS.map(y => results[y].etradeIRAEnd),
+                            backgroundColor: 'rgba(251, 191, 36, 0.9)',
+                            borderColor: 'rgba(251, 191, 36, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: "Wells Fargo",
+                            data: YEARS.map(y => results[y].wellsFargoEnd),
+                            backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: true, mode: 'nearest' },
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleFont: { weight: '600' },
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`,
+                                footer: (items, data) => {
+                                    if (items.length === 0) return '';
+                                    const dataIndex = items[0].dataIndex;
+                                    const chart = items[0].chart;
+                                    let total = 0;
+                                    chart.data.datasets.forEach(dataset => {
+                                        total += dataset.data[dataIndex] || 0;
+                                    });
+                                    return `Total Net Worth: ${formatCurrency(total)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: { callback: value => '$' + (value / 1000000).toFixed(1) + 'M' },
+                            grid: { color: 'rgba(99, 102, 241, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Income Chart (Stacked Bar) - Shows specific accounts grouped by category
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            if (incomeChart) incomeChart.destroy();
+            incomeChart = new Chart(incomeCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        // Fixed Income - Pensions (bottom, purple/pink shades)
+                        {
+                            label: "Bob's Pension",
+                            data: YEARS.map(y => results[y].bobsPension),
+                            backgroundColor: 'rgba(99, 102, 241, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        {
+                            label: "Susan's Pension",
+                            data: YEARS.map(y => results[y].susansPension),
+                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        // Fixed Income - Social Security (cyan shades)
+                        {
+                            label: "Susan's SS",
+                            data: YEARS.map(y => results[y].susansSS),
+                            backgroundColor: 'rgba(34, 211, 238, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        {
+                            label: "Susan's RMD",
+                            data: YEARS.map(y => results[y].susansRMD),
+                            backgroundColor: 'rgba(251, 191, 36, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        // Variable Income - IRA Distributions (orange/amber shades)
+                        {
+                            label: "Bob's SS",
+                            data: YEARS.map(y => results[y].bobsSS),
+                            backgroundColor: 'rgba(6, 182, 212, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        {
+                            label: "eTrade RMD",
+                            data: YEARS.map(y => results[y].etradeRMD),
+                            backgroundColor: 'rgba(253, 224, 71, 0.7)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        // Variable Income - Brokerage (green)
+                        {
+                            label: 'Wells Fargo',
+                            data: YEARS.map(y => results[y].wellsFargoWithdrawal),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        },
+                        {
+                            label: "Bob's IRA Dist",
+                            data: YEARS.map(y => results[y].bobsIRADist),
+                            backgroundColor: 'rgba(245, 158, 11, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'income'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'rect', padding: 15, boxWidth: 12 },
+                            position: 'top'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ctx.raw > 0 ? `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` : null,
+                                footer: (items, data) => {
+                                    if (items.length === 0) return '';
+                                    const dataIndex = items[0].dataIndex;
+                                    const chart = items[0].chart;
+                                    let total = 0;
+                                    chart.data.datasets.forEach(dataset => {
+                                        total += dataset.data[dataIndex] || 0;
+                                    });
+                                    return `Total: ${formatCurrency(total)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                            stacked: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' },
+                            grid: { color: 'rgba(99, 102, 241, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // After-Tax Income Chart (Stacked Bar) - Shows spendable income
+            // After-tax from taxable sources = gross taxable income (ex-conversion) - total taxes
+            // Tax-free sources pass through at 100%
+            const afterTaxCtx = document.getElementById('afterTaxChart').getContext('2d');
+            if (afterTaxChart) afterTaxChart.destroy();
+            afterTaxChart = new Chart(afterTaxCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        // After-tax income from taxable sources (pensions, SS, RMDs - minus taxes)
+                        {
+                            label: "After-Tax from Taxable",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConversion = r.grossTaxableIncome - r.rothConversion;
+                                return grossExConversion - r.totalTax;
+                            }),
+                            backgroundColor: 'rgba(99, 102, 241, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTax'
+                        },
+                        // Tax-free: Roth withdrawals
+                        {
+                            label: 'Roth Withdrawal',
+                            data: YEARS.map(y => results[y].rothWithdrawal),
+                            backgroundColor: 'rgba(20, 184, 166, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTax'
+                        },
+                        // Tax-free: Wells Fargo withdrawals
+                        {
+                            label: 'Wells Fargo',
+                            data: YEARS.map(y => results[y].wellsFargoWithdrawal),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTax'
+                        }
+                        // Note: Bob's IRA Dist excluded - it's a Roth conversion, not spendable income
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'rect', padding: 15, boxWidth: 12 },
+                            position: 'top'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(16, 185, 129, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ctx.raw > 0 ? `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` : null,
+                                footer: (items, data) => {
+                                    if (items.length === 0) return '';
+                                    const dataIndex = items[0].dataIndex;
+                                    const year = YEARS[dataIndex];
+                                    return `Total Spendable: ${formatCurrency(results[year].totalNetIncome)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                            stacked: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' },
+                            grid: { color: 'rgba(16, 185, 129, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // After-Tax Detail Chart (Stacked Bar) - Shows after-tax by source with same colors as Income chart
+            // Calculates each source's contribution to spendable income using proportional tax allocation
+            const afterTaxDetailCtx = document.getElementById('afterTaxDetailChart').getContext('2d');
+            if (afterTaxDetailChart) afterTaxDetailChart.destroy();
+            afterTaxDetailChart = new Chart(afterTaxDetailCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        // Fixed Income - Pensions (purple shades) - same colors as Income chart
+                        {
+                            label: "Bob's Pension",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.bobsPension * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(99, 102, 241, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        {
+                            label: "Susan's Pension",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.susansPension * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        // Social Security (cyan shades)
+                        {
+                            label: "Susan's SS",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.susansSS * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(34, 211, 238, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        {
+                            label: "Susan's RMD",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.susansRMD * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(251, 191, 36, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        {
+                            label: "Bob's SS",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.bobsSS * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(6, 182, 212, 0.9)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        {
+                            label: "eTrade RMD",
+                            data: YEARS.map(y => {
+                                const r = results[y];
+                                const grossExConv = r.grossTaxableIncome - r.rothConversion;
+                                const taxRate = grossExConv > 0 ? r.totalTax / grossExConv : 0;
+                                return r.etradeRMD * (1 - taxRate);
+                            }),
+                            backgroundColor: 'rgba(253, 224, 71, 0.7)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        // Tax-free sources - pass through at 100%
+                        {
+                            label: 'Roth Withdrawal',
+                            data: YEARS.map(y => results[y].rothWithdrawal),
+                            backgroundColor: 'rgba(20, 184, 166, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        },
+                        {
+                            label: 'Wells Fargo',
+                            data: YEARS.map(y => results[y].wellsFargoWithdrawal),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(30, 30, 40, 0.8)',
+                            borderWidth: 1,
+                            stack: 'afterTaxDetail'
+                        }
+                        // Note: Bob's IRA Dist excluded - it's a Roth conversion, not spendable income
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'rect', padding: 15, boxWidth: 12 },
+                            position: 'top'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(16, 185, 129, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ctx.raw > 0 ? `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` : null,
+                                footer: (items, data) => {
+                                    if (items.length === 0) return '';
+                                    const dataIndex = items[0].dataIndex;
+                                    const year = YEARS[dataIndex];
+                                    return `Total Spendable: ${formatCurrency(results[year].totalNetIncome)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                            stacked: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' },
+                            grid: { color: 'rgba(16, 185, 129, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Tax Chart
+            const taxCtx = document.getElementById('taxChart').getContext('2d');
+            if (taxChart) taxChart.destroy();
+            taxChart = new Chart(taxCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        {
+                            label: 'Federal Tax',
+                            data: YEARS.map(y => results[y].federalTax),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'State Tax',
+                            data: YEARS.map(y => results[y].stateTax),
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, pointStyle: 'rect', padding: 20 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' },
+                            grid: { color: 'rgba(99, 102, 241, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Roth Conversion Chart
+            const rothCtx = document.getElementById('rothChart').getContext('2d');
+            if (rothChart) rothChart.destroy();
+            rothChart = new Chart(rothCtx, {
+                type: 'bar',
+                data: {
+                    labels: YEARS,
+                    datasets: [
+                        {
+                            label: 'Roth Conversion',
+                            data: YEARS.map(y => results[y].rothConversion),
+                            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                            borderRadius: 4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Roth Balance',
+                            data: YEARS.map(y => results[y].bobsRothEnd),
+                            type: 'line',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            position: 'left',
+                            ticks: {
+                                color: 'rgba(99, 102, 241, 1)',
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: 'rgba(99, 102, 241, 0.1)' },
+                            title: { display: true, text: 'Annual Conversion', color: 'rgba(99, 102, 241, 1)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: {
+                                color: 'rgba(16, 185, 129, 1)',
+                                callback: value => '$' + (value / 1000000).toFixed(1) + 'M'
+                            },
+                            grid: { display: false },
+                            title: { display: true, text: 'Roth Balance', color: 'rgba(16, 185, 129, 1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== MAIN UPDATE FUNCTION ====================
+
+        function updateDashboard() {
+            const results = calculateModel();
+            renderSummaryMetrics(results);
+            renderIncomeTable(results);
+            renderAfterTaxTable(results);
+            renderBalanceTable(results);
+            renderTaxTable(results);
+            createCharts(results);
+        }
+
+        // ==================== EVENT LISTENERS ====================
+
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', updateDashboard);
+            input.addEventListener('input', debounce(updateDashboard, 300));
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Initial render
+        initYearSelectors();
+        updateDashboard();
+    </script>
+</body>
+</html>

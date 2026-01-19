@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Holdings Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: #ffd700;
+            margin: 15px 0 10px 0;
+            font-size: 1em;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.05));
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .account-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .account-tab {
+            padding: 10px 20px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            background: transparent;
+            color: #00d4ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .account-tab:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .account-tab.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .holdings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            margin-top: 15px;
+        }
+
+        .holdings-table th,
+        .holdings-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .holdings-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            position: sticky;
+            top: 0;
+            text-align: right;
+        }
+
+        .holdings-table th:first-child,
+        .holdings-table td:first-child {
+            text-align: left;
+        }
+
+        .holdings-table th:nth-child(2),
+        .holdings-table td:nth-child(2) {
+            text-align: left;
+        }
+
+        .holdings-table tr:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .holdings-table .total-row {
+            background: rgba(255, 215, 0, 0.1);
+            font-weight: bold;
+        }
+
+        .holdings-table .total-row td {
+            border-top: 2px solid #ffd700;
+        }
+
+        .positive { color: #00ff88; }
+        .negative { color: #ff6b6b; }
+
+        .add-holding-form {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 100px 120px 80px;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .add-holding-form input {
+            padding: 8px 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        .add-holding-form input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .add-holding-form input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 6px;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .btn-add {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.5);
+            color: #00ff88;
+        }
+
+        .btn-add:hover {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .btn-delete {
+            background: rgba(255, 99, 132, 0.1);
+            border-color: rgba(255, 99, 132, 0.5);
+            color: #ff6b6b;
+            padding: 4px 8px;
+            font-size: 0.8em;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 99, 132, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .add-holding-form {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .import-export {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .account-total {
+            font-size: 1.1em;
+            color: #ffd700;
+            margin-left: auto;
+            padding-left: 20px;
+        }
+
+        .account-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .last-updated {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Portfolio Holdings Tracker</h1>
+
+        <div class="nav-links">
+            <a href="retirement-dashboard.html">Retirement Projections</a>
+            <a href="holdings-tracker.html">Holdings Tracker</a>
+        </div>
+
+        <!-- Portfolio Summary -->
+        <div class="card summary-card">
+            <h2>Portfolio Summary</h2>
+            <div class="metric-grid" id="summaryMetrics">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+
+        <!-- Account Tabs -->
+        <div class="card">
+            <h2>Account Holdings</h2>
+            <div class="import-export">
+                <button class="btn btn-add" onclick="updateAllPrices()" id="updatePricesBtn">Update Prices & Record Daily</button>
+                <button class="btn" onclick="resetToRecommendations()" style="border-color: rgba(255, 206, 86, 0.5); color: #ffd700;">Reset to Recommendations</button>
+                <button class="btn" onclick="exportData()">Export Data</button>
+                <label class="btn" for="importFile">Import Data</label>
+                <input type="file" id="importFile" class="file-input" accept=".json" onchange="importData(event)">
+            </div>
+            <div id="priceUpdateStatus" style="color: #888; font-size: 0.85em; margin-bottom: 10px;"></div>
+            <div class="account-tabs" id="accountTabs">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div id="holdingsContent">
+                <!-- Account holdings table populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Performance History -->
+        <div class="card">
+            <h2>Daily Performance Tracking (YTD)</h2>
+            <div class="import-export" style="margin-bottom: 10px;">
+                <button class="btn btn-add" onclick="recordDailySnapshot()">Record Today's Snapshot</button>
+                <button class="btn" onclick="rebuildPerformanceHistory()" style="border-color: rgba(255, 206, 86, 0.5); color: #ffd700;">Rebuild History</button>
+                <button class="btn" onclick="exportPerformanceCSV()">Export CSV</button>
+            </div>
+            <div class="table-container" style="max-height: 300px;">
+                <table class="holdings-table" id="performanceTable">
+                    <!-- Populated by JavaScript -->
+                </table>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid-2">
+            <div class="card">
+                <h2>Allocation by Account</h2>
+                <div class="chart-container">
+                    <canvas id="accountChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Asset Type Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="assetChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Chart -->
+        <div class="card">
+            <h2>Portfolio Value Over Time</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; align-items: center;">
+                <div>
+                    <label style="color: #888; font-size: 0.85em;">View:</label>
+                    <select id="chartViewSelect" onchange="updatePerformanceChart()" style="padding: 6px 10px; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 6px; background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 0.9em;">
+                        <option value="total">Total Portfolio</option>
+                        <optgroup label="Accounts">
+                            <option value="bobs-ira">Bob's IRA</option>
+                            <option value="susans-ira">Susan's IRA</option>
+                            <option value="bobs-roth">Bob's Roth IRA</option>
+                            <option value="etrade-ira">eTrade IRA</option>
+                            <option value="wells-fargo">Wells Fargo Brokerage</option>
+                            <option value="nutrien-401k">Nutrien 401K</option>
+                        </optgroup>
+                        <optgroup label="Bob's IRA Holdings" id="bobsIraSymbols"></optgroup>
+                        <optgroup label="Susan's IRA Holdings" id="susansIraSymbols"></optgroup>
+                        <optgroup label="eTrade IRA Holdings" id="etradeIraSymbols"></optgroup>
+                        <optgroup label="Wells Fargo Holdings" id="wellsFargoSymbols"></optgroup>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <label style="color: #888; font-size: 0.85em;">
+                        <input type="checkbox" id="show50DMA" onchange="updatePerformanceChart()" style="margin-right: 5px;">
+                        50-Day MA
+                    </label>
+                    <label style="color: #888; font-size: 0.85em;">
+                        <input type="checkbox" id="show200DMA" onchange="updatePerformanceChart()" style="margin-right: 5px;">
+                        200-Day MA
+                    </label>
+                </div>
+                <div id="chartInfo" style="margin-left: auto; color: #888; font-size: 0.85em;"></div>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA STRUCTURE ====================
+
+        const ACCOUNTS = [
+            { id: 'bobs-ira', name: "Bob's IRA", owner: 'Bob', type: 'IRA' },
+            { id: 'susans-ira', name: "Susan's IRA", owner: 'Susan', type: 'IRA' },
+            { id: 'bobs-roth', name: "Bob's Roth IRA", owner: 'Bob', type: 'Roth' },
+            { id: 'etrade-ira', name: "eTrade IRA", owner: 'Bob', type: 'IRA' },
+            { id: 'wells-fargo', name: "Wells Fargo Brokerage", owner: 'Joint', type: 'Brokerage' },
+            { id: 'nutrien-401k', name: "Nutrien 401K", owner: 'Bob', type: '401K' }
+        ];
+
+        // Holdings data structure - loaded from localStorage or initialized empty
+        let holdingsData = loadData() || initializeEmptyData();
+        let currentAccount = ACCOUNTS[0].id;
+
+        function initializeEmptyData() {
+            // Pre-populated with recommended holdings from FINAL-Portfolio-Summary-2026-01-02
+            // Prices from January 2, 2026 (first trading day of 2026)
+            // Quantities calculated to match target market values
+            return {
+                lastUpdated: '2026-01-02T16:00:00.000Z',
+                purchaseDate: '2026-01-02',
+                accounts: {
+                    'bobs-ira': [
+                        // Bob's Unified Portfolio - Anchor Positions (24%)
+                        { symbol: 'NVDA', description: 'NVIDIA (Tech/Semiconductor)', quantity: 1027.76, price: 188.85, marketValue: 194088, costBasis: 194088, assetType: 'Stocks', tier: 'Anchor', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'XLV', description: 'Healthcare Sector ETF (Longevity)', quantity: 1248.07, price: 155.51, marketValue: 194088, costBasis: 194088, assetType: 'ETFs', tier: 'Anchor', gainLoss: 0, gainLossPercent: 0 },
+                        // Core Positions (33%)
+                        { symbol: 'META', description: 'Meta Platforms (Tech)', quantity: 273.54, price: 650.41, marketValue: 177914, costBasis: 177914, assetType: 'Stocks', tier: 'Core', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'GOOGL', description: 'Alphabet (Tech)', quantity: 564.56, price: 315.15, marketValue: 177914, costBasis: 177914, assetType: 'Stocks', tier: 'Core', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'AMZN', description: 'Amazon (Tech)', quantity: 785.46, price: 226.50, marketValue: 177914, costBasis: 177914, assetType: 'Stocks', tier: 'Core', gainLoss: 0, gainLossPercent: 0 },
+                        // Supporting Positions (27%)
+                        { symbol: 'ITA', description: 'Aerospace/Defense ETF', quantity: 655.67, price: 222.01, marketValue: 145566, costBasis: 145566, assetType: 'ETFs', tier: 'Supporting', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'XLU', description: 'Utilities ETF (Infrastructure)', quantity: 3371.05, price: 43.18, marketValue: 145566, costBasis: 145566, assetType: 'ETFs', tier: 'Supporting', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'GRID', description: 'Grid Infrastructure ETF', quantity: 934.16, price: 155.82, marketValue: 145566, costBasis: 145566, assetType: 'ETFs', tier: 'Supporting', gainLoss: 0, gainLossPercent: 0 },
+                        // Satellite Positions (16%)
+                        { symbol: 'IHI', description: 'Medical Devices ETF (Longevity)', quantity: 1045.29, price: 61.89, marketValue: 64696, costBasis: 64696, assetType: 'ETFs', tier: 'Satellite', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'NOW', description: 'ServiceNow (Tech)', quantity: 438.77, price: 147.45, marketValue: 64696, costBasis: 64696, assetType: 'Stocks', tier: 'Satellite', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'AVGO', description: 'Broadcom (Tech/Semiconductor)', quantity: 186.10, price: 347.62, marketValue: 64696, costBasis: 64696, assetType: 'Stocks', tier: 'Satellite', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'CRWD', description: 'CrowdStrike (Tech/Cybersecurity)', quantity: 142.62, price: 453.58, marketValue: 64696, costBasis: 64696, assetType: 'Stocks', tier: 'Satellite', gainLoss: 0, gainLossPercent: 0 }
+                    ],
+                    'susans-ira': [
+                        // Susan's IRA - RMD withdrawals only, legacy to daughters
+                        { symbol: 'VTI', description: 'US Total Market ETF', quantity: 1157.72, price: 336.31, marketValue: 389350, costBasis: 389350, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'VUG', description: 'US Growth ETF', quantity: 400.41, price: 486.20, marketValue: 194675, costBasis: 194675, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'VXUS', description: 'International ETF', quantity: 1526.02, price: 76.54, marketValue: 116805, costBasis: 116805, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'BND', description: 'Bond ETF (stability)', quantity: 1051.67, price: 74.04, marketValue: 77870, costBasis: 77870, assetType: 'Bonds', gainLoss: 0, gainLossPercent: 0 }
+                    ],
+                    'bobs-roth': [
+                        // Bob's Roth IRA - part of unified portfolio, currently empty in recommendations
+                    ],
+                    'etrade-ira': [
+                        // eTrade IRA - Safety backstop (hope to never touch)
+                        { symbol: 'VTI', description: 'US Total Market ETF', quantity: 2787.37, price: 336.31, marketValue: 937380, costBasis: 937380, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'VXUS', description: 'International ETF', quantity: 5102.45, price: 76.54, marketValue: 390575, costBasis: 390575, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 },
+                        { symbol: 'VUG', description: 'US Growth ETF', quantity: 481.98, price: 486.20, marketValue: 234345, costBasis: 234345, assetType: 'ETFs', gainLoss: 0, gainLossPercent: 0 }
+                    ],
+                    'wells-fargo': [
+                        // Wells Fargo Brokerage - SACRED COW - Living expenses + Roth conversion taxes
+                        { symbol: 'SGOV', description: '0-3 Month Treasury ETF', quantity: 19619.56, price: 100.41, marketValue: 1970000, costBasis: 1970000, assetType: 'Cash', gainLoss: 0, gainLossPercent: 0 }
+                    ],
+                    'nutrien-401k': [
+                        // Nutrien 401K - not specified in recommendations
+                    ]
+                }
+            };
+        }
+
+        // ==================== LOCAL STORAGE ====================
+
+        function saveData() {
+            holdingsData.lastUpdated = new Date().toISOString();
+            localStorage.setItem('portfolioHoldings', JSON.stringify(holdingsData));
+            updateLastUpdated();
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('portfolioHoldings');
+            return saved ? JSON.parse(saved) : null;
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(holdingsData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `portfolio-holdings-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetToRecommendations() {
+            if (confirm('Reset all holdings to the recommended portfolio from the January 2026 strategy? This will overwrite any changes you have made.')) {
+                localStorage.removeItem('portfolioHoldings');
+                holdingsData = initializeEmptyData();
+                saveData();
+                renderAll();
+                alert('Holdings reset to recommended portfolio.');
+            }
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.accounts) {
+                        holdingsData = imported;
+                        saveData();
+                        renderAll();
+                        alert('Data imported successfully!');
+                    } else {
+                        alert('Invalid data format');
+                    }
+                } catch (err) {
+                    alert('Error importing data: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+
+        // ==================== PERFORMANCE TRACKING ====================
+
+        // Historical price data for all symbols (Jan 2 - Jan 16, 2026)
+        const HISTORICAL_PRICES = {
+            'NVDA':  { '2026-01-02': 188.85, '2026-01-05': 188.12, '2026-01-06': 187.24, '2026-01-07': 189.11, '2026-01-08': 185.04, '2026-01-09': 184.86, '2026-01-12': 184.94, '2026-01-13': 185.81, '2026-01-14': 183.14, '2026-01-15': 187.05, '2026-01-16': 186.23 },
+            'XLV':   { '2026-01-02': 155.51, '2026-01-05': 155.04, '2026-01-06': 158.09, '2026-01-07': 159.66, '2026-01-08': 158.12, '2026-01-09': 157.31, '2026-01-12': 157.38, '2026-01-13': 156.74, '2026-01-14': 157.86, '2026-01-15': 156.96, '2026-01-16': 155.74 },
+            'META':  { '2026-01-02': 650.41, '2026-01-05': 658.79, '2026-01-06': 660.62, '2026-01-07': 648.69, '2026-01-08': 646.06, '2026-01-09': 653.06, '2026-01-12': 641.97, '2026-01-13': 631.09, '2026-01-14': 615.52, '2026-01-15': 620.80, '2026-01-16': 620.25 },
+            'GOOGL': { '2026-01-02': 315.15, '2026-01-05': 316.54, '2026-01-06': 314.34, '2026-01-07': 321.98, '2026-01-08': 325.44, '2026-01-09': 328.57, '2026-01-12': 331.86, '2026-01-13': 335.97, '2026-01-14': 335.84, '2026-01-15': 332.78, '2026-01-16': 330.00 },
+            'AMZN':  { '2026-01-02': 226.50, '2026-01-05': 233.06, '2026-01-06': 240.93, '2026-01-07': 241.56, '2026-01-08': 246.29, '2026-01-09': 247.38, '2026-01-12': 246.47, '2026-01-13': 242.60, '2026-01-14': 236.65, '2026-01-15': 238.18, '2026-01-16': 239.12 },
+            'ITA':   { '2026-01-02': 222.01, '2026-01-05': 226.48, '2026-01-06': 230.21, '2026-01-07': 226.41, '2026-01-08': 227.43, '2026-01-09': 232.97, '2026-01-12': 236.55, '2026-01-13': 237.54, '2026-01-14': 239.16, '2026-01-15': 241.21, '2026-01-16': 243.77 },
+            'XLU':   { '2026-01-02': 43.18, '2026-01-05': 42.70, '2026-01-06': 42.91, '2026-01-07': 41.87, '2026-01-08': 41.99, '2026-01-09': 42.51, '2026-01-12': 42.58, '2026-01-13': 42.85, '2026-01-14': 43.17, '2026-01-15': 43.61, '2026-01-16': 43.39 },
+            'GRID':  { '2026-01-02': 155.82, '2026-01-05': 157.26, '2026-01-06': 157.42, '2026-01-07': 156.61, '2026-01-08': 154.75, '2026-01-09': 156.05, '2026-01-12': 156.89, '2026-01-13': 156.56, '2026-01-14': 156.38, '2026-01-15': 157.47, '2026-01-16': 159.24 },
+            'IHI':   { '2026-01-02': 61.89, '2026-01-05': 62.77, '2026-01-06': 64.40, '2026-01-07': 64.30, '2026-01-08': 64.20, '2026-01-09': 63.94, '2026-01-12': 63.19, '2026-01-13': 62.36, '2026-01-14': 62.55, '2026-01-15': 62.42, '2026-01-16': 61.83 },
+            'NOW':   { '2026-01-02': 147.45, '2026-01-05': 147.60, '2026-01-06': 148.81, '2026-01-07': 150.90, '2026-01-08': 146.19, '2026-01-09': 141.80, '2026-01-12': 142.64, '2026-01-13': 138.19, '2026-01-14': 134.61, '2026-01-15': 131.17, '2026-01-16': 127.31 },
+            'AVGO':  { '2026-01-02': 347.62, '2026-01-05': 343.42, '2026-01-06': 343.77, '2026-01-07': 343.50, '2026-01-08': 332.48, '2026-01-09': 344.97, '2026-01-12': 352.21, '2026-01-13': 354.61, '2026-01-14': 339.89, '2026-01-15': 343.02, '2026-01-16': 351.71 },
+            'CRWD':  { '2026-01-02': 453.58, '2026-01-05': 456.55, '2026-01-06': 458.32, '2026-01-07': 478.91, '2026-01-08': 463.87, '2026-01-09': 470.61, '2026-01-12': 466.99, '2026-01-13': 468.02, '2026-01-14': 460.70, '2026-01-15': 455.00, '2026-01-16': 453.88 },
+            'VTI':   { '2026-01-02': 336.31, '2026-01-05': 338.84, '2026-01-06': 341.21, '2026-01-07': 340.05, '2026-01-08': 340.14, '2026-01-09': 342.40, '2026-01-12': 343.03, '2026-01-13': 342.34, '2026-01-14': 341.00, '2026-01-15': 342.05, '2026-01-16': 341.85 },
+            'VUG':   { '2026-01-02': 486.20, '2026-01-05': 488.45, '2026-01-06': 490.23, '2026-01-07': 491.49, '2026-01-08': 488.15, '2026-01-09': 491.03, '2026-01-12': 492.53, '2026-01-13': 491.24, '2026-01-14': 485.13, '2026-01-15': 485.59, '2026-01-16': 485.09 },
+            'VXUS':  { '2026-01-02': 76.54, '2026-01-05': 77.35, '2026-01-06': 77.62, '2026-01-07': 77.23, '2026-01-08': 77.28, '2026-01-09': 77.83, '2026-01-12': 78.55, '2026-01-13': 78.13, '2026-01-14': 78.47, '2026-01-15': 78.60, '2026-01-16': 78.64 },
+            'BND':   { '2026-01-02': 74.04, '2026-01-05': 74.18, '2026-01-06': 74.18, '2026-01-07': 74.26, '2026-01-08': 74.13, '2026-01-09': 74.29, '2026-01-12': 74.22, '2026-01-13': 74.28, '2026-01-14': 74.43, '2026-01-15': 74.32, '2026-01-16': 74.20 },
+            'SGOV':  { '2026-01-02': 100.41, '2026-01-05': 100.42, '2026-01-06': 100.43, '2026-01-07': 100.44, '2026-01-08': 100.45, '2026-01-09': 100.47, '2026-01-12': 100.49, '2026-01-13': 100.50, '2026-01-14': 100.51, '2026-01-15': 100.52, '2026-01-16': 100.56 }
+        };
+
+        // Trading days in January 2026
+        const TRADING_DAYS = ['2026-01-02', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-09', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15', '2026-01-16'];
+
+        // Holdings quantities (fixed from Jan 2 purchase)
+        const HOLDINGS_QUANTITIES = {
+            'bobs-ira': {
+                'NVDA': 1027.76, 'XLV': 1248.07, 'META': 273.54, 'GOOGL': 564.56, 'AMZN': 785.46,
+                'ITA': 655.67, 'XLU': 3371.05, 'GRID': 934.16, 'IHI': 1045.29, 'NOW': 438.77,
+                'AVGO': 186.10, 'CRWD': 142.62
+            },
+            'susans-ira': { 'VTI': 1157.72, 'VUG': 400.41, 'VXUS': 1526.02, 'BND': 1051.67 },
+            'bobs-roth': {},
+            'etrade-ira': { 'VTI': 2787.37, 'VXUS': 5102.45, 'VUG': 481.98 },
+            'wells-fargo': { 'SGOV': 19619.56 },
+            'nutrien-401k': {}
+        };
+
+        // Calculate portfolio value for a specific date using historical prices
+        function calculateHistoricalValue(date) {
+            let total = 0;
+            const accountValues = {};
+
+            for (const [accountId, holdings] of Object.entries(HOLDINGS_QUANTITIES)) {
+                let accountTotal = 0;
+                for (const [symbol, quantity] of Object.entries(holdings)) {
+                    const price = HISTORICAL_PRICES[symbol]?.[date];
+                    if (price) {
+                        accountTotal += quantity * price;
+                    }
+                }
+                accountValues[accountId] = accountTotal;
+                total += accountTotal;
+            }
+
+            return { total, accountValues };
+        }
+
+        // Load performance history from localStorage, but check if it needs rebuilding
+        let performanceHistory = loadAndValidatePerformanceHistory();
+
+        function loadAndValidatePerformanceHistory() {
+            const saved = localStorage.getItem('performanceHistory');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Check if we have all historical trading days
+                // If not, we need to rebuild to include missing days
+                const historicalDates = TRADING_DAYS.filter(d => d <= new Date().toISOString().split('T')[0]);
+                const savedDates = parsed.snapshots.map(s => s.date);
+                const missingDates = historicalDates.filter(d => !savedDates.includes(d));
+
+                if (missingDates.length > 0) {
+                    console.log('Rebuilding performance history - missing dates:', missingDates);
+                    const rebuilt = initializePerformanceHistory();
+                    // Merge any dates from saved that are beyond our historical data
+                    parsed.snapshots.forEach(s => {
+                        if (!TRADING_DAYS.includes(s.date)) {
+                            rebuilt.snapshots.push(s);
+                        }
+                    });
+                    // Sort by date
+                    rebuilt.snapshots.sort((a, b) => a.date.localeCompare(b.date));
+                    localStorage.setItem('performanceHistory', JSON.stringify(rebuilt));
+                    return rebuilt;
+                }
+                return parsed;
+            }
+            return initializePerformanceHistory();
+        }
+
+        function initializePerformanceHistory() {
+            // Build complete history from January 2, 2026 through today
+            const baselineValue = calculateHistoricalValue('2026-01-02').total;
+            const snapshots = [];
+
+            let prevValue = baselineValue;
+
+            TRADING_DAYS.forEach((date, idx) => {
+                const { total, accountValues } = calculateHistoricalValue(date);
+                const dayChange = idx === 0 ? 0 : total - prevValue;
+                const dayChangePercent = idx === 0 ? 0 : (dayChange / prevValue) * 100;
+                const ytdChange = total - baselineValue;
+                const ytdChangePercent = (ytdChange / baselineValue) * 100;
+
+                snapshots.push({
+                    date: date,
+                    totalValue: Math.round(total),
+                    dayChange: Math.round(dayChange),
+                    dayChangePercent: dayChangePercent,
+                    ytdChange: Math.round(ytdChange),
+                    ytdChangePercent: ytdChangePercent,
+                    accounts: {
+                        'bobs-ira': Math.round(accountValues['bobs-ira']),
+                        'susans-ira': Math.round(accountValues['susans-ira']),
+                        'bobs-roth': 0,
+                        'etrade-ira': Math.round(accountValues['etrade-ira']),
+                        'wells-fargo': Math.round(accountValues['wells-fargo']),
+                        'nutrien-401k': 0
+                    }
+                });
+
+                prevValue = total;
+            });
+
+            return {
+                snapshots: snapshots,
+                baselineValue: Math.round(baselineValue),
+                baselineDate: '2026-01-02'
+            };
+        }
+
+        // Function to rebuild history from scratch (clears localStorage)
+        function rebuildPerformanceHistory() {
+            if (confirm('Rebuild performance history from January 2, 2026? This will replace any existing history.')) {
+                localStorage.removeItem('performanceHistory');
+                performanceHistory = initializePerformanceHistory();
+                savePerformanceHistory();
+                renderPerformanceTable();
+                renderPerformanceChart();
+                alert('Performance history rebuilt with all trading days since Jan 2, 2026.');
+            }
+        }
+
+        function loadPerformanceHistory() {
+            const saved = localStorage.getItem('performanceHistory');
+            return saved ? JSON.parse(saved) : null;
+        }
+
+        function savePerformanceHistory() {
+            localStorage.setItem('performanceHistory', JSON.stringify(performanceHistory));
+        }
+
+        function recordDailySnapshot() {
+            const today = new Date().toISOString().split('T')[0];
+            const totalValue = calculatePortfolioTotal();
+
+            // Check if we already have a snapshot for today
+            const existingIdx = performanceHistory.snapshots.findIndex(s => s.date === today);
+
+            // Get previous day's value for daily change calculation
+            const prevSnapshot = performanceHistory.snapshots[performanceHistory.snapshots.length - 1];
+            const prevValue = existingIdx > 0 ?
+                performanceHistory.snapshots[existingIdx - 1].totalValue :
+                prevSnapshot.totalValue;
+
+            const dayChange = totalValue - prevValue;
+            const dayChangePercent = prevValue > 0 ? (dayChange / prevValue) * 100 : 0;
+
+            // YTD calculation
+            const ytdChange = totalValue - performanceHistory.baselineValue;
+            const ytdChangePercent = performanceHistory.baselineValue > 0 ?
+                (ytdChange / performanceHistory.baselineValue) * 100 : 0;
+
+            // Get account totals
+            const accountValues = {};
+            ACCOUNTS.forEach(acc => {
+                accountValues[acc.id] = calculateAccountTotal(acc.id);
+            });
+
+            const snapshot = {
+                date: today,
+                totalValue: totalValue,
+                dayChange: existingIdx >= 0 ? dayChange : dayChange,
+                dayChangePercent: existingIdx >= 0 ? dayChangePercent : dayChangePercent,
+                ytdChange: ytdChange,
+                ytdChangePercent: ytdChangePercent,
+                accounts: accountValues
+            };
+
+            if (existingIdx >= 0) {
+                // Update existing snapshot
+                performanceHistory.snapshots[existingIdx] = snapshot;
+                alert('Updated today\'s snapshot.');
+            } else {
+                // Add new snapshot
+                performanceHistory.snapshots.push(snapshot);
+                alert('Recorded new daily snapshot for ' + today);
+            }
+
+            savePerformanceHistory();
+            renderPerformanceTable();
+            renderPerformanceChart();
+        }
+
+        function exportPerformanceCSV() {
+            let csv = 'Date,Total Value,Day Change,Day Change %,YTD Change,YTD Change %,Bob\'s IRA,Susan\'s IRA,Bob\'s Roth,eTrade IRA,Wells Fargo,Nutrien 401K\n';
+
+            performanceHistory.snapshots.forEach(s => {
+                csv += `${s.date},${s.totalValue.toFixed(2)},${s.dayChange.toFixed(2)},${s.dayChangePercent.toFixed(2)}%,${s.ytdChange.toFixed(2)},${s.ytdChangePercent.toFixed(2)}%,`;
+                csv += `${(s.accounts['bobs-ira'] || 0).toFixed(2)},${(s.accounts['susans-ira'] || 0).toFixed(2)},`;
+                csv += `${(s.accounts['bobs-roth'] || 0).toFixed(2)},${(s.accounts['etrade-ira'] || 0).toFixed(2)},`;
+                csv += `${(s.accounts['wells-fargo'] || 0).toFixed(2)},${(s.accounts['nutrien-401k'] || 0).toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `portfolio-performance-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function renderPerformanceTable() {
+            const table = document.getElementById('performanceTable');
+
+            // Sort snapshots by date descending (most recent first)
+            const sortedSnapshots = [...performanceHistory.snapshots].sort((a, b) =>
+                new Date(b.date) - new Date(a.date)
+            );
+
+            let html = `
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Date</th>
+                        <th>Total Value</th>
+                        <th>Day Change</th>
+                        <th>Day %</th>
+                        <th>YTD Change</th>
+                        <th>YTD %</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            sortedSnapshots.forEach(s => {
+                const dayClass = s.dayChange >= 0 ? 'positive' : 'negative';
+                const ytdClass = s.ytdChange >= 0 ? 'positive' : 'negative';
+                html += `
+                    <tr>
+                        <td style="text-align: left;">${s.date}</td>
+                        <td>${formatCurrency(s.totalValue)}</td>
+                        <td class="${dayClass}">${formatCurrency(s.dayChange)}</td>
+                        <td class="${dayClass}">${formatPercent(s.dayChangePercent)}</td>
+                        <td class="${ytdClass}">${formatCurrency(s.ytdChange)}</td>
+                        <td class="${ytdClass}">${formatPercent(s.ytdChangePercent)}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        // ==================== PRICE UPDATE FUNCTIONS ====================
+
+        // Get all unique symbols across all accounts
+        function getAllSymbols() {
+            const symbols = new Set();
+            ACCOUNTS.forEach(acc => {
+                const holdings = holdingsData.accounts[acc.id] || [];
+                holdings.forEach(h => {
+                    if (h.symbol) symbols.add(h.symbol);
+                });
+            });
+            return Array.from(symbols);
+        }
+
+        // Fetch current price for a symbol using Twelve Data API (has CORS support)
+        async function fetchPrice(symbol) {
+            // Use Twelve Data free API - supports CORS and has 800 API calls/day free
+            // No API key needed for basic quotes with limited rate
+            try {
+                const url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=demo`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.price) {
+                        const price = parseFloat(data.price);
+                        // Get previous close for change calculation
+                        const prevUrl = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=demo`;
+                        try {
+                            const prevResponse = await fetch(prevUrl, { signal: AbortSignal.timeout(5000) });
+                            if (prevResponse.ok) {
+                                const prevData = await prevResponse.json();
+                                const previousClose = parseFloat(prevData.previous_close) || price;
+                                return {
+                                    symbol: symbol,
+                                    price: price,
+                                    previousClose: previousClose,
+                                    change: price - previousClose,
+                                    changePercent: ((price - previousClose) / previousClose) * 100
+                                };
+                            }
+                        } catch (e) {
+                            // If quote fails, just return price without change data
+                        }
+                        return {
+                            symbol: symbol,
+                            price: price,
+                            previousClose: price,
+                            change: 0,
+                            changePercent: 0
+                        };
+                    }
+                    // Check for rate limit or error message
+                    if (data.code === 429 || data.status === 'error') {
+                        console.log(`Twelve Data rate limited for ${symbol}: ${data.message || 'Rate limited'}`);
+                    }
+                }
+            } catch (error) {
+                console.log(`Twelve Data failed for ${symbol}: ${error.message}`);
+            }
+
+            // Fallback: Try Alpha Vantage demo endpoint
+            try {
+                const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=demo`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data['Global Quote'] && data['Global Quote']['05. price']) {
+                        const quote = data['Global Quote'];
+                        const price = parseFloat(quote['05. price']);
+                        const previousClose = parseFloat(quote['08. previous close']) || price;
+                        return {
+                            symbol: symbol,
+                            price: price,
+                            previousClose: previousClose,
+                            change: parseFloat(quote['09. change']) || 0,
+                            changePercent: parseFloat(quote['10. change percent']?.replace('%', '')) || 0
+                        };
+                    }
+                }
+            } catch (error) {
+                console.log(`Alpha Vantage failed for ${symbol}: ${error.message}`);
+            }
+
+            console.error(`All methods failed for ${symbol}`);
+            return null;
+        }
+
+        // Update all prices and recalculate portfolio
+        async function updateAllPrices() {
+            const btn = document.getElementById('updatePricesBtn');
+            const status = document.getElementById('priceUpdateStatus');
+
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            status.innerHTML = '<span style="color: #ffd700;">Fetching current prices...</span>';
+
+            const symbols = getAllSymbols();
+            const prices = {};
+            let fetched = 0;
+            let failed = 0;
+            const failedSymbols = [];
+
+            // Fetch all prices
+            for (const symbol of symbols) {
+                status.innerHTML = `<span style="color: #ffd700;">Fetching ${symbol}... (${fetched + failed + 1}/${symbols.length})</span>`;
+                const result = await fetchPrice(symbol);
+                if (result) {
+                    prices[symbol] = result;
+                    fetched++;
+                } else {
+                    failed++;
+                    failedSymbols.push(symbol);
+                }
+                // Longer delay to avoid rate limiting on free API tiers
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            // Update holdings with new prices
+            ACCOUNTS.forEach(acc => {
+                const holdings = holdingsData.accounts[acc.id] || [];
+                holdings.forEach(h => {
+                    if (h.symbol && prices[h.symbol]) {
+                        const newPrice = prices[h.symbol].price;
+                        h.price = newPrice;
+                        h.marketValue = h.quantity * newPrice;
+                        if (h.costBasis && h.costBasis > 0) {
+                            h.gainLoss = h.marketValue - h.costBasis;
+                            h.gainLossPercent = (h.gainLoss / h.costBasis) * 100;
+                        }
+                    }
+                });
+            });
+
+            // Save updated holdings
+            saveData();
+
+            // Record daily snapshot only if we got at least some prices
+            if (fetched > 0) {
+                recordDailySnapshotSilent();
+            }
+
+            // Update display
+            renderAll();
+
+            btn.disabled = false;
+            btn.textContent = 'Update Prices & Record Daily';
+            const now = new Date();
+
+            if (fetched === symbols.length) {
+                status.innerHTML = `<span class="positive">✓ Updated all ${fetched} symbols at ${now.toLocaleTimeString()}</span>`;
+            } else if (fetched > 0) {
+                status.innerHTML = `<span class="positive">Updated ${fetched} symbols at ${now.toLocaleTimeString()}</span>` +
+                    `<span class="negative"> - Failed: ${failedSymbols.join(', ')}</span>`;
+            } else {
+                status.innerHTML = `<span class="negative">⚠ Price update failed - CORS proxies may be blocked. Try again later or enter prices manually.</span>`;
+            }
+        }
+
+        // Silent version that doesn't show alert
+        function recordDailySnapshotSilent() {
+            const today = new Date().toISOString().split('T')[0];
+            const totalValue = calculatePortfolioTotal();
+
+            const existingIdx = performanceHistory.snapshots.findIndex(s => s.date === today);
+            const prevSnapshot = performanceHistory.snapshots[performanceHistory.snapshots.length - 1];
+            const prevValue = existingIdx > 0 ?
+                performanceHistory.snapshots[existingIdx - 1].totalValue :
+                (existingIdx === 0 ? prevSnapshot.totalValue : prevSnapshot.totalValue);
+
+            const dayChange = totalValue - prevValue;
+            const dayChangePercent = prevValue > 0 ? (dayChange / prevValue) * 100 : 0;
+            const ytdChange = totalValue - performanceHistory.baselineValue;
+            const ytdChangePercent = performanceHistory.baselineValue > 0 ?
+                (ytdChange / performanceHistory.baselineValue) * 100 : 0;
+
+            const accountValues = {};
+            ACCOUNTS.forEach(acc => {
+                accountValues[acc.id] = calculateAccountTotal(acc.id);
+            });
+
+            const snapshot = {
+                date: today,
+                totalValue: totalValue,
+                dayChange: dayChange,
+                dayChangePercent: dayChangePercent,
+                ytdChange: ytdChange,
+                ytdChangePercent: ytdChangePercent,
+                accounts: accountValues
+            };
+
+            if (existingIdx >= 0) {
+                performanceHistory.snapshots[existingIdx] = snapshot;
+            } else {
+                performanceHistory.snapshots.push(snapshot);
+            }
+
+            savePerformanceHistory();
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+
+        function formatCurrency(value) {
+            if (value === undefined || value === null || isNaN(value)) return '-';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            if (value === undefined || value === null || isNaN(value)) return '-';
+            return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+        }
+
+        function formatNumber(value, decimals = 2) {
+            if (value === undefined || value === null || isNaN(value)) return '-';
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(value);
+        }
+
+        function updateLastUpdated() {
+            const el = document.getElementById('lastUpdated');
+            if (holdingsData.lastUpdated) {
+                const date = new Date(holdingsData.lastUpdated);
+                el.textContent = `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+            } else {
+                el.textContent = '';
+            }
+        }
+
+        // ==================== CALCULATIONS ====================
+
+        function calculateAccountTotal(accountId) {
+            const holdings = holdingsData.accounts[accountId] || [];
+            return holdings.reduce((sum, h) => sum + (h.marketValue || 0), 0);
+        }
+
+        function calculatePortfolioTotal() {
+            return ACCOUNTS.reduce((sum, acc) => sum + calculateAccountTotal(acc.id), 0);
+        }
+
+        function calculateAccountGainLoss(accountId) {
+            const holdings = holdingsData.accounts[accountId] || [];
+            return holdings.reduce((sum, h) => sum + (h.gainLoss || 0), 0);
+        }
+
+        function calculatePortfolioGainLoss() {
+            return ACCOUNTS.reduce((sum, acc) => sum + calculateAccountGainLoss(acc.id), 0);
+        }
+
+        function getAssetTypeBreakdown() {
+            const breakdown = {
+                'Stocks': 0,
+                'ETFs': 0,
+                'Mutual Funds': 0,
+                'Bonds': 0,
+                'Cash': 0,
+                'Other': 0
+            };
+
+            ACCOUNTS.forEach(acc => {
+                const holdings = holdingsData.accounts[acc.id] || [];
+                holdings.forEach(h => {
+                    const type = h.assetType || 'Other';
+                    breakdown[type] = (breakdown[type] || 0) + (h.marketValue || 0);
+                });
+            });
+
+            return breakdown;
+        }
+
+        // ==================== RENDERING ====================
+
+        function renderSummary() {
+            const container = document.getElementById('summaryMetrics');
+            const total = calculatePortfolioTotal();
+            const gainLoss = calculatePortfolioGainLoss();
+            const gainLossPercent = total > 0 ? (gainLoss / (total - gainLoss)) * 100 : 0;
+
+            const accountTotals = ACCOUNTS.map(acc => ({
+                name: acc.name,
+                value: calculateAccountTotal(acc.id)
+            })).filter(a => a.value > 0);
+
+            const metrics = [
+                { label: 'Total Portfolio', value: formatCurrency(total) },
+                {
+                    label: 'Total Gain/Loss',
+                    value: formatCurrency(gainLoss),
+                    class: gainLoss >= 0 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Total Return',
+                    value: formatPercent(gainLossPercent),
+                    class: gainLossPercent >= 0 ? 'positive' : 'negative'
+                },
+                { label: 'Accounts', value: accountTotals.length }
+            ];
+
+            container.innerHTML = metrics.map(m => `
+                <div class="metric">
+                    <div class="metric-value ${m.class || ''}">${m.value}</div>
+                    <div class="metric-label">${m.label}</div>
+                </div>
+            `).join('');
+
+            updateLastUpdated();
+        }
+
+        function renderAccountTabs() {
+            const container = document.getElementById('accountTabs');
+            container.innerHTML = ACCOUNTS.map(acc => {
+                const total = calculateAccountTotal(acc.id);
+                return `
+                    <button class="account-tab ${acc.id === currentAccount ? 'active' : ''}"
+                            onclick="selectAccount('${acc.id}')">
+                        ${acc.name}
+                        <span class="account-total">${formatCurrency(total)}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectAccount(accountId) {
+            currentAccount = accountId;
+            renderAccountTabs();
+            renderHoldings();
+        }
+
+        function renderHoldings() {
+            const container = document.getElementById('holdingsContent');
+            const account = ACCOUNTS.find(a => a.id === currentAccount);
+            const holdings = holdingsData.accounts[currentAccount] || [];
+            const total = calculateAccountTotal(currentAccount);
+            const gainLoss = calculateAccountGainLoss(currentAccount);
+
+            let html = `
+                <div class="table-container">
+                    <table class="holdings-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Market Value</th>
+                                <th>Gain/Loss $</th>
+                                <th>Gain/Loss %</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            holdings.forEach((h, idx) => {
+                const glClass = (h.gainLoss || 0) >= 0 ? 'positive' : 'negative';
+                const glPctClass = (h.gainLossPercent || 0) >= 0 ? 'positive' : 'negative';
+                html += `
+                    <tr>
+                        <td><strong>${h.symbol || '-'}</strong></td>
+                        <td>${h.description || '-'}</td>
+                        <td>${h.assetType || '-'}</td>
+                        <td>${formatNumber(h.quantity, 4)}</td>
+                        <td>${formatCurrency(h.price)}</td>
+                        <td>${formatCurrency(h.marketValue)}</td>
+                        <td class="${glClass}">${formatCurrency(h.gainLoss)}</td>
+                        <td class="${glPctClass}">${formatPercent(h.gainLossPercent)}</td>
+                        <td><button class="btn-delete" onclick="deleteHolding(${idx})">Delete</button></td>
+                    </tr>
+                `;
+            });
+
+            // Total row
+            const totalGlClass = gainLoss >= 0 ? 'positive' : 'negative';
+            html += `
+                    <tr class="total-row">
+                        <td colspan="5"><strong>Total</strong></td>
+                        <td><strong>${formatCurrency(total)}</strong></td>
+                        <td class="${totalGlClass}"><strong>${formatCurrency(gainLoss)}</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            `;
+
+            // Add holding form
+            html += `
+                <h3>Add Holding</h3>
+                <div class="add-holding-form">
+                    <input type="text" id="newSymbol" placeholder="Symbol" />
+                    <input type="text" id="newDescription" placeholder="Description" />
+                    <input type="number" id="newQuantity" placeholder="Quantity" step="0.0001" />
+                    <input type="number" id="newPrice" placeholder="Price" step="0.01" />
+                    <select id="newAssetType">
+                        <option value="Stocks">Stocks</option>
+                        <option value="ETFs">ETFs</option>
+                        <option value="Mutual Funds">Mutual Funds</option>
+                        <option value="Bonds">Bonds</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button class="btn btn-add" onclick="addHolding()">Add</button>
+                </div>
+                <div class="add-holding-form" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <input type="number" id="newCostBasis" placeholder="Cost Basis (optional)" step="0.01" />
+                    <div></div>
+                    <div></div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function addHolding() {
+            const symbol = document.getElementById('newSymbol').value.toUpperCase().trim();
+            const description = document.getElementById('newDescription').value.trim();
+            const quantity = parseFloat(document.getElementById('newQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('newPrice').value) || 0;
+            const assetType = document.getElementById('newAssetType').value;
+            const costBasis = parseFloat(document.getElementById('newCostBasis').value) || null;
+
+            if (!symbol) {
+                alert('Please enter a symbol');
+                return;
+            }
+
+            const marketValue = quantity * price;
+            let gainLoss = null;
+            let gainLossPercent = null;
+
+            if (costBasis !== null && costBasis > 0) {
+                gainLoss = marketValue - costBasis;
+                gainLossPercent = (gainLoss / costBasis) * 100;
+            }
+
+            const holding = {
+                symbol,
+                description,
+                quantity,
+                price,
+                marketValue,
+                assetType,
+                costBasis,
+                gainLoss,
+                gainLossPercent
+            };
+
+            holdingsData.accounts[currentAccount].push(holding);
+            saveData();
+            renderAll();
+
+            // Clear form
+            document.getElementById('newSymbol').value = '';
+            document.getElementById('newDescription').value = '';
+            document.getElementById('newQuantity').value = '';
+            document.getElementById('newPrice').value = '';
+            document.getElementById('newCostBasis').value = '';
+        }
+
+        function deleteHolding(index) {
+            if (confirm('Delete this holding?')) {
+                holdingsData.accounts[currentAccount].splice(index, 1);
+                saveData();
+                renderAll();
+            }
+        }
+
+        // ==================== CHARTS ====================
+
+        let accountChart, assetChart, performanceChart;
+
+        // Populate the symbol dropdown options
+        function populateSymbolDropdowns() {
+            const accountSymbolGroups = {
+                'bobsIraSymbols': 'bobs-ira',
+                'susansIraSymbols': 'susans-ira',
+                'etradeIraSymbols': 'etrade-ira',
+                'wellsFargoSymbols': 'wells-fargo'
+            };
+
+            for (const [groupId, accountId] of Object.entries(accountSymbolGroups)) {
+                const group = document.getElementById(groupId);
+                if (group) {
+                    group.innerHTML = '';
+                    const symbols = Object.keys(HOLDINGS_QUANTITIES[accountId] || {});
+                    symbols.forEach(symbol => {
+                        const option = document.createElement('option');
+                        option.value = `symbol:${accountId}:${symbol}`;
+                        option.textContent = symbol;
+                        group.appendChild(option);
+                    });
+                }
+            }
+        }
+
+        // Calculate moving average
+        function calculateMovingAverage(data, period) {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    result.push(null);
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j];
+                    }
+                    result.push(sum / period);
+                }
+            }
+            return result;
+        }
+
+        // Get chart data based on selection
+        function getChartData(viewType) {
+            const sortedSnapshots = [...performanceHistory.snapshots].sort((a, b) =>
+                new Date(a.date) - new Date(b.date)
+            );
+
+            const labels = sortedSnapshots.map(s => s.date);
+            let values = [];
+            let label = '';
+            let baselineValue = 0;
+
+            if (viewType === 'total') {
+                // Total portfolio
+                values = sortedSnapshots.map(s => s.totalValue);
+                label = 'Total Portfolio';
+                baselineValue = performanceHistory.baselineValue;
+            } else if (viewType.startsWith('symbol:')) {
+                // Individual symbol
+                const [, accountId, symbol] = viewType.split(':');
+                const quantity = HOLDINGS_QUANTITIES[accountId]?.[symbol] || 0;
+
+                values = labels.map(date => {
+                    const price = HISTORICAL_PRICES[symbol]?.[date];
+                    return price ? quantity * price : null;
+                });
+                label = `${symbol} (${ACCOUNTS.find(a => a.id === accountId)?.name || accountId})`;
+                baselineValue = values[0] || 0;
+            } else {
+                // Account view
+                values = sortedSnapshots.map(s => s.accounts?.[viewType] || 0);
+                label = ACCOUNTS.find(a => a.id === viewType)?.name || viewType;
+                baselineValue = sortedSnapshots[0]?.accounts?.[viewType] || 0;
+            }
+
+            // Calculate YTD change percentages
+            const ytdChanges = values.map(v => {
+                if (v === null || baselineValue === 0) return null;
+                return ((v - baselineValue) / baselineValue) * 100;
+            });
+
+            return { labels, values, ytdChanges, label, baselineValue };
+        }
+
+        function updatePerformanceChart() {
+            renderPerformanceChart();
+        }
+
+        function renderPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (performanceChart) performanceChart.destroy();
+
+            // Populate dropdowns on first render
+            populateSymbolDropdowns();
+
+            // Get selected view
+            const viewSelect = document.getElementById('chartViewSelect');
+            const viewType = viewSelect ? viewSelect.value : 'total';
+            const show50DMA = document.getElementById('show50DMA')?.checked || false;
+            const show200DMA = document.getElementById('show200DMA')?.checked || false;
+
+            const { labels, values, ytdChanges, label, baselineValue } = getChartData(viewType);
+
+            // Build datasets
+            const datasets = [
+                {
+                    label: label,
+                    data: values,
+                    borderColor: 'rgba(0, 212, 255, 1)',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    fill: true,
+                    tension: 0.1,
+                    yAxisID: 'y',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'YTD Return %',
+                    data: ytdChanges,
+                    borderColor: 'rgba(0, 255, 136, 1)',
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5],
+                    tension: 0.1,
+                    yAxisID: 'y1',
+                    pointRadius: 2
+                }
+            ];
+
+            // Add moving averages if selected
+            if (show50DMA) {
+                const ma50 = calculateMovingAverage(values.filter(v => v !== null), 50);
+                // Pad with nulls for missing data points
+                const paddedMa50 = values.map((v, i) => v === null ? null : ma50[i] || null);
+                datasets.push({
+                    label: '50-Day MA',
+                    data: paddedMa50,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    yAxisID: 'y',
+                    pointRadius: 0
+                });
+            }
+
+            if (show200DMA) {
+                const ma200 = calculateMovingAverage(values.filter(v => v !== null), 200);
+                const paddedMa200 = values.map((v, i) => v === null ? null : ma200[i] || null);
+                datasets.push({
+                    label: '200-Day MA',
+                    data: paddedMa200,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    yAxisID: 'y',
+                    pointRadius: 0
+                });
+            }
+
+            // Update chart info
+            const chartInfo = document.getElementById('chartInfo');
+            if (chartInfo && values.length > 0) {
+                const currentValue = values[values.length - 1];
+                const ytdChange = ytdChanges[ytdChanges.length - 1];
+                const ytdClass = ytdChange >= 0 ? 'positive' : 'negative';
+                chartInfo.innerHTML = `Current: ${formatCurrency(currentValue)} | <span class="${ytdClass}">YTD: ${formatPercent(ytdChange)}</span>`;
+            }
+
+            // Determine Y-axis format based on values
+            const maxValue = Math.max(...values.filter(v => v !== null));
+            const yAxisCallback = maxValue >= 1000000
+                ? (value) => '$' + (value / 1000000).toFixed(1) + 'M'
+                : maxValue >= 1000
+                    ? (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                    : (value) => '$' + value.toFixed(0);
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e0e0' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    if (label.includes('YTD Return')) {
+                                        return `${label}: ${formatPercent(context.raw)}`;
+                                    } else if (label.includes('MA')) {
+                                        return context.raw ? `${label}: ${formatCurrency(context.raw)}` : null;
+                                    } else {
+                                        return `${label}: ${formatCurrency(context.raw)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: {
+                                color: '#00d4ff',
+                                callback: yAxisCallback
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: {
+                                color: '#00ff88',
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCharts() {
+            // Account allocation chart
+            const accountData = ACCOUNTS.map(acc => ({
+                label: acc.name,
+                value: calculateAccountTotal(acc.id)
+            })).filter(a => a.value > 0);
+
+            const accountCtx = document.getElementById('accountChart').getContext('2d');
+            if (accountChart) accountChart.destroy();
+
+            accountChart = new Chart(accountCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: accountData.map(a => a.label),
+                    datasets: [{
+                        data: accountData.map(a => a.value),
+                        backgroundColor: [
+                            'rgba(0, 212, 255, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#e0e0e0' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${formatCurrency(value)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Asset type breakdown chart
+            const assetData = getAssetTypeBreakdown();
+            const assetLabels = Object.keys(assetData).filter(k => assetData[k] > 0);
+            const assetValues = assetLabels.map(k => assetData[k]);
+
+            const assetCtx = document.getElementById('assetChart').getContext('2d');
+            if (assetChart) assetChart.destroy();
+
+            assetChart = new Chart(assetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: assetLabels,
+                    datasets: [{
+                        data: assetValues,
+                        backgroundColor: [
+                            'rgba(0, 212, 255, 0.8)',
+                            'rgba(0, 255, 136, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(128, 128, 128, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#e0e0e0' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${formatCurrency(value)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== INITIALIZATION ====================
+
+        function renderAll() {
+            renderSummary();
+            renderAccountTabs();
+            renderHoldings();
+            renderCharts();
+            renderPerformanceTable();
+            renderPerformanceChart();
+        }
+
+        // Initial render
+        renderAll();
+    </script>
+</body>
+</html>
