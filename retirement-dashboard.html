@@ -1106,6 +1106,23 @@
                     </svg>
                     Clear Baseline
                 </button>
+                <button class="baseline-btn" id="exportSettingsBtn" onclick="exportSettings()" style="border-color: var(--positive); color: var(--positive);">
+                    <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Backup
+                </button>
+                <button class="baseline-btn" id="importSettingsBtn" onclick="document.getElementById('importFileInput').click()" style="border-color: var(--accent-tertiary); color: var(--accent-tertiary);">
+                    <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Restore
+                </button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importSettings(event)">
                 <div class="baseline-status" id="baselineStatus">
                     <span class="baseline-indicator"></span>
                     <span id="baselineStatusText">No baseline set</span>
@@ -2826,9 +2843,256 @@
             };
         }
 
+        // ==================== EXPORT/IMPORT SETTINGS ====================
+
+        function exportSettings() {
+            const settings = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                description: 'Retirement Planning Dashboard Settings Backup',
+                generalSettings: {
+                    inflationRate: parseFloat(document.getElementById('inflationRate').value),
+                    incomeTarget: parseFloat(document.getElementById('incomeTarget').value),
+                    itemizedDeductions: parseFloat(document.getElementById('itemizedDeductions').value),
+                    stateTaxRate: parseFloat(document.getElementById('stateTaxRate').value)
+                },
+                fixedIncome: {
+                    bobsPension: parseFloat(document.getElementById('bobsPension').value),
+                    susansPension: parseFloat(document.getElementById('susansPension').value),
+                    susansSS: parseFloat(document.getElementById('susansSS').value),
+                    bobsSS: parseFloat(document.getElementById('bobsSS').value)
+                },
+                accounts: {
+                    bobsIRA: parseFloat(document.getElementById('bobsIRA').value),
+                    bobsIRAROI: parseFloat(document.getElementById('bobsIRAROI').value),
+                    bobsRoth: parseFloat(document.getElementById('bobsRoth').value),
+                    bobsRothROI: parseFloat(document.getElementById('bobsRothROI').value),
+                    susansIRA: parseFloat(document.getElementById('susansIRA').value),
+                    susansIRAROI: parseFloat(document.getElementById('susansIRAROI').value),
+                    etradeIRA: parseFloat(document.getElementById('etradeIRA').value),
+                    etradeIRAROI: parseFloat(document.getElementById('etradeIRAROI').value),
+                    wellsFargo: parseFloat(document.getElementById('wellsFargo').value),
+                    interestRate: parseFloat(document.getElementById('interestRate').value)
+                },
+                displaySettings: {
+                    currentScenario: currentScenario,
+                    displayStartYear: displayStartYear,
+                    displayEndYear: displayEndYear
+                },
+                scenarios: SCENARIOS
+            };
+
+            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'settings.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Visual feedback
+            const btn = document.getElementById('exportSettingsBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `
+                <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Saved!
+            `;
+            btn.style.background = 'var(--positive)';
+            btn.style.color = 'white';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+                btn.style.color = 'var(--positive)';
+            }, 2000);
+        }
+
+        function importSettings(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const settings = JSON.parse(e.target.result);
+
+                    // Validate it's a valid settings file
+                    if (!settings.version || !settings.generalSettings || !settings.accounts) {
+                        throw new Error('Invalid settings file format');
+                    }
+
+                    // Apply general settings
+                    if (settings.generalSettings) {
+                        document.getElementById('inflationRate').value = settings.generalSettings.inflationRate ?? 3;
+                        document.getElementById('incomeTarget').value = settings.generalSettings.incomeTarget ?? 325000;
+                        document.getElementById('itemizedDeductions').value = settings.generalSettings.itemizedDeductions ?? 78000;
+                        document.getElementById('stateTaxRate').value = settings.generalSettings.stateTaxRate ?? 6;
+                    }
+
+                    // Apply fixed income
+                    if (settings.fixedIncome) {
+                        document.getElementById('bobsPension').value = settings.fixedIncome.bobsPension ?? 134686;
+                        document.getElementById('susansPension').value = settings.fixedIncome.susansPension ?? 22000;
+                        document.getElementById('susansSS').value = settings.fixedIncome.susansSS ?? 21600;
+                        document.getElementById('bobsSS').value = settings.fixedIncome.bobsSS ?? 61032;
+                    }
+
+                    // Apply account balances and ROI
+                    if (settings.accounts) {
+                        document.getElementById('bobsIRA').value = settings.accounts.bobsIRA ?? 1025000;
+                        document.getElementById('bobsIRAROI').value = settings.accounts.bobsIRAROI ?? 6;
+                        document.getElementById('bobsRoth').value = settings.accounts.bobsRoth ?? 300000;
+                        document.getElementById('bobsRothROI').value = settings.accounts.bobsRothROI ?? 6;
+                        document.getElementById('susansIRA').value = settings.accounts.susansIRA ?? 800000;
+                        document.getElementById('susansIRAROI').value = settings.accounts.susansIRAROI ?? 6;
+                        document.getElementById('etradeIRA').value = settings.accounts.etradeIRA ?? 1583637;
+                        document.getElementById('etradeIRAROI').value = settings.accounts.etradeIRAROI ?? 6;
+                        document.getElementById('wellsFargo').value = settings.accounts.wellsFargo ?? 2000000;
+                        document.getElementById('interestRate').value = settings.accounts.interestRate ?? 4;
+                    }
+
+                    // Apply display settings
+                    if (settings.displaySettings) {
+                        if (settings.displaySettings.currentScenario) {
+                            currentScenario = settings.displaySettings.currentScenario;
+                            document.getElementById('conservativeBtn').classList.toggle('active', currentScenario === 'conservative');
+                            document.getElementById('aggressiveBtn').classList.toggle('active', currentScenario === 'aggressive');
+                        }
+                        if (settings.displaySettings.displayStartYear && settings.displaySettings.displayEndYear) {
+                            displayStartYear = settings.displaySettings.displayStartYear;
+                            displayEndYear = settings.displaySettings.displayEndYear;
+                            END_YEAR = displayEndYear;
+                            rebuildDisplayYears();
+                            document.getElementById('startYearSelect').value = displayStartYear;
+                            document.getElementById('endYearSelect').value = displayEndYear;
+                            updateRangeInfo();
+                        }
+                    }
+
+                    // Apply saved scenarios if present
+                    if (settings.scenarios) {
+                        Object.assign(SCENARIOS, settings.scenarios);
+                    }
+
+                    // Clear baseline since we loaded new data
+                    clearBaseline();
+
+                    // Visual feedback
+                    const btn = document.getElementById('importSettingsBtn');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = `
+                        <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Imported!
+                    `;
+                    btn.style.background = 'var(--accent-tertiary)';
+                    btn.style.color = 'white';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.background = '';
+                        btn.style.color = 'var(--accent-tertiary)';
+                    }, 2000);
+
+                    // Recalculate
+                    updateDashboard();
+
+                } catch (error) {
+                    alert('Error importing settings: ' + error.message + '\n\nPlease make sure you selected a valid settings backup file.');
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset the file input so the same file can be selected again
+            event.target.value = '';
+        }
+
+        // ==================== AUTO-LOAD SETTINGS ====================
+
+        async function loadSettingsFromFile() {
+            try {
+                const response = await fetch('settings.json');
+                if (!response.ok) {
+                    console.log('No settings.json found, using defaults');
+                    return false;
+                }
+                const settings = await response.json();
+
+                // Validate it's a valid settings file
+                if (!settings.version || !settings.generalSettings || !settings.accounts) {
+                    console.log('Invalid settings.json format, using defaults');
+                    return false;
+                }
+
+                // Apply general settings
+                if (settings.generalSettings) {
+                    document.getElementById('inflationRate').value = settings.generalSettings.inflationRate ?? 3;
+                    document.getElementById('incomeTarget').value = settings.generalSettings.incomeTarget ?? 325000;
+                    document.getElementById('itemizedDeductions').value = settings.generalSettings.itemizedDeductions ?? 78000;
+                    document.getElementById('stateTaxRate').value = settings.generalSettings.stateTaxRate ?? 6;
+                }
+
+                // Apply fixed income
+                if (settings.fixedIncome) {
+                    document.getElementById('bobsPension').value = settings.fixedIncome.bobsPension ?? 134686;
+                    document.getElementById('susansPension').value = settings.fixedIncome.susansPension ?? 22000;
+                    document.getElementById('susansSS').value = settings.fixedIncome.susansSS ?? 21600;
+                    document.getElementById('bobsSS').value = settings.fixedIncome.bobsSS ?? 61032;
+                }
+
+                // Apply account balances and ROI
+                if (settings.accounts) {
+                    document.getElementById('bobsIRA').value = settings.accounts.bobsIRA ?? 1025000;
+                    document.getElementById('bobsIRAROI').value = settings.accounts.bobsIRAROI ?? 6;
+                    document.getElementById('bobsRoth').value = settings.accounts.bobsRoth ?? 300000;
+                    document.getElementById('bobsRothROI').value = settings.accounts.bobsRothROI ?? 6;
+                    document.getElementById('susansIRA').value = settings.accounts.susansIRA ?? 800000;
+                    document.getElementById('susansIRAROI').value = settings.accounts.susansIRAROI ?? 6;
+                    document.getElementById('etradeIRA').value = settings.accounts.etradeIRA ?? 1583637;
+                    document.getElementById('etradeIRAROI').value = settings.accounts.etradeIRAROI ?? 6;
+                    document.getElementById('wellsFargo').value = settings.accounts.wellsFargo ?? 2000000;
+                    document.getElementById('interestRate').value = settings.accounts.interestRate ?? 4;
+                }
+
+                // Apply display settings
+                if (settings.displaySettings) {
+                    if (settings.displaySettings.currentScenario) {
+                        currentScenario = settings.displaySettings.currentScenario;
+                        document.getElementById('conservativeBtn').classList.toggle('active', currentScenario === 'conservative');
+                        document.getElementById('aggressiveBtn').classList.toggle('active', currentScenario === 'aggressive');
+                    }
+                    if (settings.displaySettings.displayStartYear && settings.displaySettings.displayEndYear) {
+                        displayStartYear = settings.displaySettings.displayStartYear;
+                        displayEndYear = settings.displaySettings.displayEndYear;
+                        END_YEAR = displayEndYear;
+                        rebuildDisplayYears();
+                    }
+                }
+
+                // Apply saved scenarios if present
+                if (settings.scenarios) {
+                    Object.assign(SCENARIOS, settings.scenarios);
+                }
+
+                console.log('Settings loaded from settings.json');
+                return true;
+            } catch (error) {
+                console.log('Could not load settings.json:', error.message);
+                return false;
+            }
+        }
+
         // Initial render
         initYearSelectors();
-        updateDashboard();
+        loadSettingsFromFile().then(() => {
+            document.getElementById('startYearSelect').value = displayStartYear;
+            document.getElementById('endYearSelect').value = displayEndYear;
+            updateRangeInfo();
+            updateDashboard();
+        });
     </script>
 </body>
 </html>

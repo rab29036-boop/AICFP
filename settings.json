@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "exportDate": "2026-01-19T00:00:00.000Z",
+  "description": "Retirement Planning Dashboard Settings Backup",
+  "generalSettings": {
+    "inflationRate": 3,
+    "incomeTarget": 325000,
+    "itemizedDeductions": 78000,
+    "stateTaxRate": 6
+  },
+  "fixedIncome": {
+    "bobsPension": 134686,
+    "susansPension": 22000,
+    "susansSS": 21600,
+    "bobsSS": 61032
+  },
+  "accounts": {
+    "bobsIRA": 1025000,
+    "bobsIRAROI": 6,
+    "bobsRoth": 300000,
+    "bobsRothROI": 6,
+    "susansIRA": 800000,
+    "susansIRAROI": 6,
+    "etradeIRA": 1583637,
+    "etradeIRAROI": 6,
+    "wellsFargo": 2000000,
+    "interestRate": 4
+  },
+  "displaySettings": {
+    "currentScenario": "conservative",
+    "displayStartYear": 2027,
+    "displayEndYear": 2036
+  },
+  "scenarios": {
+    "conservative": {
+      "bobsIRA": 1025000,
+      "bobsIRAROI": 6,
+      "bobsRoth": 300000,
+      "bobsRothROI": 6,
+      "susansIRA": 800000,
+      "susansIRAROI": 6,
+      "etradeIRA": 1583637,
+      "etradeIRAROI": 6,
+      "wellsFargo": 2000000,
+      "interestRate": 4,
+      "inflationRate": 3,
+      "incomeTarget": 325000,
+      "itemizedDeductions": 78000,
+      "stateTaxRate": 6,
+      "bobsPension": 134686,
+      "susansPension": 22000,
+      "susansSS": 21600,
+      "bobsSS": 61032
+    },
+    "aggressive": {
+      "bobsIRA": 1025000,
+      "bobsIRAROI": 13,
+      "bobsRoth": 300000,
+      "bobsRothROI": 17,
+      "susansIRA": 800000,
+      "susansIRAROI": 9.5,
+      "etradeIRA": 1583637,
+      "etradeIRAROI": 9.5,
+      "wellsFargo": 2000000,
+      "interestRate": 4,
+      "inflationRate": 3,
+      "incomeTarget": 325000,
+      "itemizedDeductions": 78000,
+      "stateTaxRate": 6,
+      "bobsPension": 134686,
+      "susansPension": 22000,
+      "susansSS": 21600,
+      "bobsSS": 61032
+    }
+  }
+}
